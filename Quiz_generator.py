@@ -22,7 +22,7 @@ class QuizGenerator:
         }
 
         for i in range(num_questions):
-            # Create a more detailed prompt for better question generation
+            # Create detailed prompt for better question generation
             prompt = f"""Generate a unique multiple choice question about {topic}.
             Difficulty level: {difficulty} ({difficulty_levels[difficulty]})
             Include 4 possible answers, with the correct answer first.
