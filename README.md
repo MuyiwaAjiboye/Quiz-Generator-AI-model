@@ -58,7 +58,7 @@ For beginners, here are the key concepts we're using:
 - **Methods**: Functions that belong to a class
 - **Objects**: Instances of classes
 - **Imports**: Ways to use code from other files
-- **AI Model**: Pre-trained system that generates questions
+- **AI Model**: Pre-trained systems that generate questions and options (we use two pipelines)
 
 # Quiz Generator Documentation (Part 2/4)
 
@@ -79,8 +79,7 @@ class QuizGenerator:
         # This is like loading a smart brain that can make questions
         self.generator = pipeline('text2text-generation', model='facebook/bart-large-cnn')
         # These are like different helpers that do specific jobs
-        self.question_handler = QuestionHandler()  # Makes questions
-        self.history = QuizHistory()              # Remembers past quizzes
+        self.question_handler = QuestionHandler()  # Makes questions and generates options using its own AI pipeline        self.history = QuizHistory()              # Remembers past quizzes
         self.result_handler = ResultHandler()      # Handles answers and scores
         self.current_quiz = None                  # Keeps track of current quiz
 
@@ -212,6 +211,9 @@ class QuestionHandler:
     def __init__(self):
         # We want 4 options for each question (A, B, C, D)
         self.option_count = 4
+        # Initialize a separate AI pipeline for generating options
+        print("Initializing question handler...")
+        self.option_generator = pipeline('text2text-generation', model='facebook/bart-large-cnn')
 
     def create_question(self, generated_text: str, topic: str, difficulty: str) -> Dict:
         """This is like a recipe for making each question perfect"""
@@ -378,8 +380,9 @@ class QuizHistory:
 
 1. **question_handler.py**:
    - Think of this as the question creator
-   - It takes the AI's text and makes it into a proper question
-   - Creates 4 options for each question
+   - Has its own AI pipeline specifically for generating options
+   - Takes the AI's text and makes it into a proper question
+   - Creates contextually relevant multiple-choice options
    - Makes sure everything is formatted nicely
 
 2. **result_handler.py**:
