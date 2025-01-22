@@ -15,16 +15,45 @@ class QuizGenerator:
     def generate_quiz(self, topic: str, difficulty: str, num_questions: int) -> dict:
         questions = []
 
-        for _ in range(num_questions):
-            prompt = f"Generate a {difficulty} multiple choice question about {topic}."
-            output = self.generator(prompt, max_length=100, num_return_sequences=1)
+        difficulty_levels = {
+            'easy': "basic concepts and fundamental principles",
+            'medium': "intermediate concepts and practical applications",
+            'hard': "advanced concepts and complex scenarios"
+        }
 
-            question = self.question_handler.create_question(
-                output[0]['generated_text'],
-                topic,
-                difficulty
-            )
-            questions.append(question)
+        for i in range(num_questions):
+            # Create a more detailed prompt for better question generation
+            prompt = f"""Generate a unique multiple choice question about {topic}.
+            Difficulty level: {difficulty} ({difficulty_levels[difficulty]})
+            Include 4 possible answers, with the correct answer first.
+            Format:
+            [Question]
+            [Correct Answer]
+            [Wrong Answer 1]
+            [Wrong Answer 2]
+            [Wrong Answer 3]
+            Make it specific to {topic} and appropriate for the {difficulty} difficulty level."""
+
+            try:
+                output = self.generator(
+                    prompt,
+                    max_length=200,
+                    min_length=50,
+                    temperature=0.8,
+                    num_return_sequences=1,
+                    do_sample=True
+                )
+
+                question = self.question_handler.create_question(
+                    output[0]['generated_text'],
+                    topic,
+                    difficulty
+                )
+                questions.append(question)
+
+            except Exception as e:
+                print(f"Error generating question {i+1}: {e}")
+                continue
 
         quiz = {
             'topic': topic,

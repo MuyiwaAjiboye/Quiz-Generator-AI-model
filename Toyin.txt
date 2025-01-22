@@ -1,0 +1,93 @@
+Research and outline the features of at least 7 user interface/user interaction styles following a historical/evolutionary pathway.
+Afterwards present your position on the topic: HCI then and now: What goes what stays?
+Include APA style references
+
+Note that Plagiarism is being checked at max 20%.
+
+Submit using the attached google doc ONLY.
+
+Answer:
+
+1. Command Line Interface(CLI):
+Early beginnings of CLIs
+Command-line interfaces were first used in the mid-1960s on computer terminals. Before then, people used punch cards.
+Early history and evolution of CLI in computers
+The command line interpreter for CTSS was one of the first CLIs, developed in 1961. The Multics shell, developed in 1965, introduced many features that are still present today, like the command history and tab completion.
+Command-line interfaces (CLIs) were used before graphical user interfaces (GUIs), from the mainframe era in the 1950s to the 1960s. In the 1960s, minicomputers with multiple processors were invented. Due to their limited resources and applications, minicomputers relied on CLIs.
+After microcomputers boarded, a new user base was introduced to CLIs. Innovative CLI features, such as command completion, history, and aliases, were also developed to overcome hardware limitations.
+Evolution through decades
+CLIs have become more efficient over the last decades. The shells have become more user-friendly, the speed has improved, and there is adequate support for scripting languages.
+Advancements in CLI through the 1970s, 1980s, and 1990s
+1970s: Unix had the first computer command shells around the late 60s. Computers mainly worked with single-line commands entered into a command line interface.
+1980s: Personal computers with graphical user interfaces started to become popular, leading to a decline in CLI use.
+1990s to present: With the introduction of Apple Macintosh and Microsoft Windows, GUIs replaced CLI. However, CLIs remained relevant for system administration, programming and batch processing.
+Pros and cons of CLI
+Command-line interfaces (CLIs) are fast and efficient. They use less memory and function better on slower processors. However, users need to always know complex commands, which increases the risk of errors. Also, the limited undo functionality can be frustrating.
+Modern CLI developments
+Command-line interfaces (CLIs) have improved in modern operating systems. They now work with more user-friendly interfaces. That extra versatility has also made them more accessible to non-technical users.
+The complexity of modern operating systems is such that GUIs cannot completely control all system functions. So, software developers still use CLIs to automate repetitive tasks, debug code, and interact with various tools and services.
+The current state of CLI in modern operating systems
+PowerShell has become the primary CLI in the Windows operating system. It allows users to run advanced scripts and automate tasks within the OS. Linux still relies on CLI, with Bash as the default shell. Bash offers extensive scripting options, which are central to Linux's flexibility.
+Linux relies on the CLI, with Bash as the default shell interface. Bash provides powerful command-line tools and extensive scripting options central to Linux's flexibility and control. The Terminal app on macOS gives users a Unix-like environment, with Bash and Zsh as the default shells. It gives macOS users the same robust command-line experience in Linux and access to powerful Unix utilities.
+Terminal emulators like iTerm2 for macOS or GNOME Terminal for Linux have enhanced features, such as multiple tabs, split panes, and advanced text manipulation, that ensure the CLI is more user-friendly and efficient.
+CLIs have evolved in modern operating systems. They benefit from the power and flexibility of modern operating systems. It remains an essential tool for many advanced users.
+ i'm trying to reduced to plagiarism to less than 20% and i prefer it not being less than 15%
+
+Here's a revised, more original version of the CLI content with reduced similarity:
+
+Command Line Interface (CLI):
+
+The Genesis and Evolution
+Command Line Interfaces emerged in the mid-1960s, marking a significant shift from the earlier punch card systems. The development of CTSS in 1961 introduced one of the pioneering CLI implementations, followed by the Multics shell in 1965, which brought revolutionary features like command history and tab completion that remain relevant today.
+
+Historical Progression
+During the mainframe era (1950s-1960s), CLIs served as the primary interaction method between users and computers. The advent of minicomputers with multiple processors in the 1960s further solidified CLI's position due to hardware constraints and application requirements. The microcomputer revolution introduced CLIs to a broader user base, spurring innovations in interface functionality.
+
+Developmental Milestones
+1970s: The emergence of Unix brought sophisticated command shells, establishing foundational patterns for modern CLI design.
+1980s: Despite the rising popularity of personal computers with graphical interfaces, CLIs maintained their significance in specialized applications.
+1990s-Present: While GUI-based systems like Apple Macintosh and Microsoft Windows dominated consumer computing, CLIs retained their crucial role in system administration, development, and automation tasks.
+
+Strengths and Limitations
+CLIs excel in performance efficiency and resource utilization, making them ideal for systems with limited computing power. However, they present a steep learning curve due to command memorization requirements and often lack comprehensive undo capabilities.
+
+Contemporary Implementation
+Modern operating systems integrate enhanced CLI capabilities:
+- Windows PowerShell: Offers advanced scripting and system automation
+- Linux Bash: Provides robust scripting and system control
+- macOS Terminal: Combines Unix-like environment with modern features
+
+Current CLI environments benefit from improved terminal emulators (like iTerm2 and GNOME Terminal), offering sophisticated features such as:
+- Multi-tab support
+- Split-pane functionality
+- Advanced text manipulation
+- Improved user interaction models
+
+These advancements maintain CLI's relevance in contemporary computing, particularly for technical users and system administrators who require precise control and automation capabilities.
+
+2. Menu-driven Interface:
+
+Historical Context and Evolution
+Menu-driven interfaces emerged in the 1970s as a revolutionary step forward from command-line interfaces, offering a more approachable method of human-computer interaction. This interface style gained prominence through its implementation in business systems and public-facing terminals, making computing accessible to users without technical expertise.
+
+The fundamental concept behind menu-driven interfaces was to present users with a structured list of available options, eliminating the need to memorize commands. This approach transformed how everyday users interacted with technology, particularly in public spaces through ATMs and library catalog systems.
+
+Design and Implementation
+Menu-driven interfaces utilized a hierarchical structure where choices were organized into logical categories. Users navigated through these categories by selecting options from presented lists, making decisions at each level to reach their desired function. This sequential decision-making process guided users through complex operations while maintaining simplicity in interaction.
+
+Early implementations appeared in banking systems, where ATMs became the quintessential example of menu-driven interface success. These systems demonstrated how complex financial transactions could be broken down into simple, sequential steps accessible to the general public. Similar approaches were adopted in hotel reservation systems and travel booking terminals, establishing a standard for public-facing computer interactions.
+
+Advantages and Impact
+The introduction of menu-driven interfaces significantly reduced the learning curve associated with computer use. Users no longer needed extensive training or technical knowledge to operate systems effectively. This accessibility factor made menu-driven interfaces particularly valuable in business environments, where employee training time could be minimized while maintaining operational efficiency.
+
+The consistent interaction model provided by menu-driven interfaces also led to lower error rates compared to command-line systems. Users could clearly see their available options, reducing the likelihood of invalid inputs or commands. This predictability made menu-driven interfaces ideal for critical applications like financial transactions and inventory management.
+
+Limitations and Evolution
+Despite their advantages, menu-driven interfaces faced certain limitations. Advanced users often found the step-by-step navigation process cumbersome and time-consuming compared to direct command input. The fixed paths through menu hierarchies could make complex tasks tedious, requiring users to navigate through multiple levels of menus to accomplish their goals.
+
+Modern Legacy
+While pure menu-driven interfaces are less prevalent in contemporary computing, their influence persists in modern interface design. The principles established by menu-driven systems continue to shape aspects of graphical user interfaces, mobile applications, and web navigation. Interactive Voice Response (IVR) systems in telecommunications and setup wizards in software installation procedures demonstrate the enduring relevance of menu-driven interaction patterns.
+
+The legacy of menu-driven interfaces extends beyond their original implementations, informing the development of user interface hierarchies and navigation structures in modern computing environments. Their contribution to making technology accessible to non-technical users remains a significant milestone in the evolution of human-computer interaction.
+
+Form Fills/Dialogs
