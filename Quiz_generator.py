@@ -1,12 +1,15 @@
-from transformers import pipeline
+from transformers import T5ForConditionalGeneration, T5Tokenizer
 from utils.question_handler import QuestionHandler
-from utils.quiz_history import QuizHistory
 from utils.result_handler import ResultHandler
+from utils.quiz_history import QuizHistory
+import random
 
 class QuizGenerator:
     def __init__(self):
         print("Loading pre-trained model...")
-        self.generator = pipeline('text2text-generation', model='facebook/bart-large-cnn')
+        self.model_name = "t5-base"
+        self.tokenizer = T5Tokenizer.from_pretrained(self.model_name)
+        self.model = T5ForConditionalGeneration.from_pretrained(self.model_name)
         self.question_handler = QuestionHandler()
         self.history = QuizHistory()
         self.result_handler = ResultHandler()
@@ -16,37 +19,52 @@ class QuizGenerator:
         """Generate a quiz with specified number of questions"""
         questions = []
 
-        # Define difficulty-specific prompts
-        difficulty_prompts = {
-            'easy': "basic concepts and fundamentals",
-            'medium': "intermediate concepts and applications",
-            'hard': "advanced concepts and complex scenarios"
-        }
+        # Different question types for variety
+        question_types = [
+            "what is",
+            "how does",
+            "explain",
+            "compare",
+            "describe",
+            "define",
+            "analyze"
+        ]
 
         for _ in range(num_questions):
-            prompt = f"""
-    Question: Write a {difficulty} question about {topic} focusing on {difficulty_prompts[difficulty]}.
-    Format: Return only the question without any other text.
-    Example format:
-    What is a variable in Python?
-    """
+            # Randomly select question type for variety
+            question_type = random.choice(question_types)
+
+            prompt = f"{question_type} {topic} in computing context with {difficulty} difficulty"
 
             try:
-                output = self.generator(
-                    prompt,
-                    max_length=100,
-                    min_length=10,
-                    temperature=0.8,
+                # Encode and generate question
+                inputs = self.tokenizer.encode(prompt, return_tensors="pt", max_length=512, truncation=True)
+                outputs = self.model.generate(
+                    inputs,
+                    max_length=150,
+                    min_length=30,
                     do_sample=True,
-                    num_return_sequences=1
+                    temperature=0.7,
+                    top_p=0.9,
+                    num_return_sequences=1,
+                    no_repeat_ngram_size=2  # Prevent repetition in generated text
                 )
 
+                generated_question = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+                # Create full question with options
                 question = self.question_handler.create_question(
-                    output[0]['generated_text'],
+                    generated_question,
                     topic,
                     difficulty
                 )
-                questions.append(question)
+
+                # Add to questions if it's unique
+                if not any(q['question'] == question['question'] for q in questions):
+                    questions.append(question)
+                else:
+                    # If duplicate, try again with different type
+                    continue
 
             except Exception as e:
                 print(f"Error generating question: {e}")
