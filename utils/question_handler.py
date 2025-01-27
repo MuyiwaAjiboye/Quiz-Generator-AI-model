@@ -40,26 +40,23 @@ class QuestionHandler:
 
         return question
 
-    def _generate_options_from_text(self, question: str, topic: str, difficulty: str) -> List[str]:
-        """Generate relevant options using AI"""
-        # First, check if original generated text includes options
+    def _generate_options_from_text(self, text: str, difficulty: str) -> List[str]:
+        """Generate relevant options based on the question content"""
         try:
-            # Create a specific prompt for generating options
             option_prompt = f"""
-            For this question: {question}
+            For this question: {text}
             Generate 4 multiple choice options about {topic}.
             The first option MUST be the correct answer.
             Make them {difficulty} difficulty.
-            Each option should be clear and specific.
             Format each option on a new line.
             """
 
-            # Generate options using the model
             output = self.option_generator(
                 option_prompt,
-                max_length=200,
-                min_length=50,
-                temperature=0.7,  # Control creativity
+                max_length=150,
+                min_length=20,  # Reduced this
+                temperature=0.7,
+                do_sample=True,  # Added this
                 num_return_sequences=1
             )
 

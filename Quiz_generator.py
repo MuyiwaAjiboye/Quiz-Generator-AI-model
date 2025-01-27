@@ -13,37 +13,26 @@ class QuizGenerator:
         self.current_quiz = None
 
     def generate_quiz(self, topic: str, difficulty: str, num_questions: int) -> dict:
+        """Generate a quiz with specified number of questions"""
         questions = []
 
-        difficulty_levels = {
-            'easy': "basic concepts and fundamental principles",
-            'medium': "intermediate concepts and practical applications",
-            'hard': "advanced concepts and complex scenarios"
-        }
-
-        for i in range(num_questions):
-            # Create detailed prompt for better question generation
-            prompt = f"""Generate a unique multiple choice question about {topic}.
-            Difficulty level: {difficulty} ({difficulty_levels[difficulty]})
+        for _ in range(num_questions):
+            # Generate question text
+            prompt = f"""Generate a {difficulty} multiple choice question about {topic}.
             Include 4 possible answers, with the correct answer first.
-            Format:
-            [Question]
-            [Correct Answer]
-            [Wrong Answer 1]
-            [Wrong Answer 2]
-            [Wrong Answer 3]
-            Make it specific to {topic} and appropriate for the {difficulty} difficulty level."""
+            Each answer should be on a new line."""
 
             try:
                 output = self.generator(
                     prompt,
                     max_length=200,
-                    min_length=50,
-                    temperature=0.8,
-                    num_return_sequences=1,
-                    do_sample=True
+                    min_length=20,
+                    temperature=0.7,
+                    do_sample=True,
+                    num_return_sequences=1
                 )
 
+                # Create question with options
                 question = self.question_handler.create_question(
                     output[0]['generated_text'],
                     topic,
@@ -52,9 +41,10 @@ class QuizGenerator:
                 questions.append(question)
 
             except Exception as e:
-                print(f"Error generating question {i+1}: {e}")
+                print(f"Error generating question: {e}")
                 continue
 
+        # Create quiz
         quiz = {
             'topic': topic,
             'difficulty': difficulty,
