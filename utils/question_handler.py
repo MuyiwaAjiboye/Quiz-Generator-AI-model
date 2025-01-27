@@ -42,10 +42,19 @@ class QuestionHandler:
     def _generate_options_from_text(self, question: str, topic: str, difficulty: str) -> List[str]:
         """Generate relevant options using AI"""
         try:
-            # Create a specific prompt for generating options
-            option_prompt = f"Generate 4 multiple choice answers for this question: {question}"
+            option_prompt = f"""
+    Question: {question}
+    Task: Generate exactly 4 brief answer options for this {difficulty} question about {topic}.
+    Format: One answer per line.
+    The first line must be the correct answer.
 
-            # Generate options using the model
+    Example format:
+    Correct answer here
+    Wrong answer 1
+    Wrong answer 2
+    Wrong answer 3
+    """
+
             output = self.option_generator(
                 option_prompt,
                 max_length=150,
@@ -55,37 +64,35 @@ class QuestionHandler:
                 num_return_sequences=1
             )
 
-            # Process the generated options
-            generated_text = output[0]['generated_text']
-            options = [
-                line.strip()
-                for line in generated_text.split('\n')
-                if line.strip() and not line.strip().lower().startswith(('question:', 'generate', 'options'))
-            ]
+            # Extract options, skip any lines that look like instructions
+            options = []
+            generated_lines = output[0]['generated_text'].split('\n')
+            for line in generated_lines:
+                line = line.strip()
+                if line and not any(word in line.lower() for word in ['question:', 'task:', 'format:', 'example:']):
+                    options.append(line)
 
-            # If we got enough options, use them
             if len(options) >= 4:
                 return options[:4]
 
-            # If we need more options
-            default_options = [
-                f"Correct answer for {topic}",
-                f"First incorrect answer for {topic}",
-                f"Second incorrect answer for {topic}",
-                f"Third incorrect answer for {topic}"
+            # If we don't have enough options, create topic-specific ones
+            topic_options = [
+                f"This is the correct answer about {topic}",
+                f"This is incorrect but plausible for {topic}",
+                f"This is another incorrect option for {topic}",
+                f"This is the final incorrect option for {topic}"
             ]
 
-            # Combine generated options with default ones if needed
             while len(options) < 4:
-                options.append(default_options[len(options)])
+                options.append(topic_options[len(options)])
 
             return options
 
         except Exception as e:
-            print(f"Error generating options: {e}")
+            print(f"Error in option generation: {e}")
             return [
-                f"Correct answer for {topic}",
-                f"First incorrect answer for {topic}",
-                f"Second incorrect answer for {topic}",
-                f"Third incorrect answer for {topic}"
+                f"This is the correct answer about {topic}",
+                f"This is incorrect but plausible for {topic}",
+                f"This is another incorrect option for {topic}",
+                f"This is the final incorrect option for {topic}"
             ]

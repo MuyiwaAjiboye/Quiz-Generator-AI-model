@@ -16,23 +16,31 @@ class QuizGenerator:
         """Generate a quiz with specified number of questions"""
         questions = []
 
+        # Define difficulty-specific prompts
+        difficulty_prompts = {
+            'easy': "basic concepts and fundamentals",
+            'medium': "intermediate concepts and applications",
+            'hard': "advanced concepts and complex scenarios"
+        }
+
         for _ in range(num_questions):
-            # Generate question text
-            prompt = f"""Generate a {difficulty} multiple choice question about {topic}.
-            Include 4 possible answers, with the correct answer first.
-            Each answer should be on a new line."""
+            prompt = f"""
+    Question: Write a {difficulty} question about {topic} focusing on {difficulty_prompts[difficulty]}.
+    Format: Return only the question without any other text.
+    Example format:
+    What is a variable in Python?
+    """
 
             try:
                 output = self.generator(
                     prompt,
-                    max_length=200,
-                    min_length=20,
-                    temperature=0.7,
+                    max_length=100,
+                    min_length=10,
+                    temperature=0.8,
                     do_sample=True,
                     num_return_sequences=1
                 )
 
-                # Create question with options
                 question = self.question_handler.create_question(
                     output[0]['generated_text'],
                     topic,
@@ -44,7 +52,6 @@ class QuizGenerator:
                 print(f"Error generating question: {e}")
                 continue
 
-        # Create quiz
         quiz = {
             'topic': topic,
             'difficulty': difficulty,
