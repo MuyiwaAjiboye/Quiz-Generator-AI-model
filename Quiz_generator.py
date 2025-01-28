@@ -3,6 +3,7 @@ from utils.content_processor import ContentProcessor
 from utils.question_handler import QuestionHandler
 from utils.result_handler import ResultHandler
 import torch
+import random
 
 class QuizGenerator:
     def __init__(self):
