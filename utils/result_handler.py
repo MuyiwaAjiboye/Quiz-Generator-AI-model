@@ -21,6 +21,10 @@ class ResultHandler:
 
     def show_results(self, quiz: dict, user_answers: list):
         """Display quiz results"""
+        if not user_answers or not quiz['questions']:
+            print("No answers to display.")
+            return
+
         print("\n=== Quiz Results ===")
         correct_count = 0
 
@@ -45,9 +49,9 @@ class ResultHandler:
             else:
                 print(f"Incorrect ✗ (Correct answer: {correct_letter})")
 
-        # Show final score
-        print(f"\nFinal Score: {correct_count}/{len(user_answers)} "
-              f"({(correct_count/len(user_answers)*100):.1f}%)")
+        if len(user_answers) > 0:
+            print(f"\nFinal Score: {correct_count}/{len(user_answers)} "
+                  f"({(correct_count/len(user_answers)*100):.1f}%)")
 
     def get_correct_option_letter(self, question: dict) -> str:
         """Get the letter (A, B, C, D) of the correct answer"""

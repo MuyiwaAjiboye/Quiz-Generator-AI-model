@@ -40,19 +40,19 @@ class QuestionHandler:
         """Generate relevant options for the question"""
         try:
             option_prompt = f"""
-Generate 4 multiple-choice options for this question:
-Question: {question}
-Requirements:
-1. First option must be the correct answer
-2. Other options must be plausible but incorrect
-3. Each option must be unique and related to {topic}
-4. Keep options concise and clear
+    Generate 4 multiple-choice options for this question:
+    Question: {question}
+    Requirements:
+    1. First option must be the correct answer
+    2. Other options must be plausible but incorrect
+    3. Each option must be unique and related to {topic}
+    4. Keep options concise and clear
 
-Format example:
-Correct: [The correct answer]
-Wrong: [First incorrect answer]
-Wrong: [Second incorrect answer]
-Wrong: [Third incorrect answer]"""
+    Format example:
+    Correct: [The correct answer]
+    Wrong: [First incorrect answer]
+    Wrong: [Second incorrect answer]
+    Wrong: [Third incorrect answer]"""
 
             output = self.generator(
                 option_prompt,
@@ -73,13 +73,12 @@ Wrong: [Third incorrect answer]"""
                     options.append(clean_option)
 
             # If we don't have enough options, generate more
-            if len(options) < 4:
-                remaining_options = self._generate_additional_options(
-                    question, topic, 4 - len(options)
-                )
-                options.extend(remaining_options)
+            while len(options) < 4:
+                additional = self._generate_additional_options(question, topic, 1)
+                if additional and additional[0] not in options:
+                    options.extend(additional)
 
-            return options[:4]
+            return options[:4] if len(options) >= 4 else self._generate_fallback_options(question, topic)
 
         except Exception as e:
             print(f"Error generating options: {e}")

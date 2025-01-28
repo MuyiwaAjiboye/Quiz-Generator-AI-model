@@ -117,20 +117,17 @@ def main():
                 continue
 
             quiz = quiz_gen.generate_quiz(topic, difficulty, num_questions)
+
+            # Check if questions were generated successfully
+            if not quiz['questions']:
+                print("\nFailed to generate questions. Please try again.")
+                continue
+
             user_answers = quiz_gen.result_handler.take_quiz(quiz)
-            quiz_gen.result_handler.show_results(quiz, user_answers)
 
-        elif choice == '2':
-            quizzes = quiz_gen.history.get_all()
-            if not quizzes:
-                print("No quiz history found!")
-            for quiz in quizzes:
-                print(f"\nTopic: {quiz['topic']}")
-                print(f"Date: {quiz['timestamp']}")
-                print(f"Number of questions: {len(quiz['questions'])}")
-
-        elif choice == '3':
-            break
+            # Only show results if there are answers
+            if user_answers:
+                quiz_gen.result_handler.show_results(quiz, user_answers)
 
 if __name__ == "__main__":
     main()
