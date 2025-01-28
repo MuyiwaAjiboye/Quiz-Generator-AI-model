@@ -5,9 +5,7 @@ from transformers import T5ForConditionalGeneration, T5Tokenizer
 class QuestionHandler:
     def __init__(self):
         print("Initializing question handler...")
-        self.model_name = "t5-base"
-        self.tokenizer = T5Tokenizer.from_pretrained(self.model_name)
-        self.model = T5ForConditionalGeneration.from_pretrained(self.model_name)
+        self.generator = pipeline('text2text-generation', model='facebook/bart-large-cnn')
         self.option_count = 4
 
     def create_question(self, question_text: str, topic: str, difficulty: str) -> Dict:
@@ -42,39 +40,44 @@ class QuestionHandler:
         """Generate relevant options for the question"""
         try:
             option_prompt = f"""
-            Question: {question}
-            Generate four concise answer options.
-            - First option must be the correct answer
-            - Other options must be plausible but incorrect
-            - Each option should be brief and clear
-            - No explanations or prefixes
-            """
+Generate 4 multiple-choice options for this question:
+Question: {question}
+Requirements:
+1. First option must be the correct answer
+2. Other options must be plausible but incorrect
+3. Each option must be unique and related to {topic}
+4. Keep options concise and clear
 
-            inputs = self.tokenizer.encode(option_prompt, return_tensors="pt", max_length=512, truncation=True)
-            outputs = self.model.generate(
-                inputs,
-                max_length=100,
-                min_length=10,
+Format example:
+Correct: [The correct answer]
+Wrong: [First incorrect answer]
+Wrong: [Second incorrect answer]
+Wrong: [Third incorrect answer]"""
+
+            output = self.generator(
+                option_prompt,
+                max_length=150,
+                min_length=20,
                 do_sample=True,
                 temperature=0.7,
-                top_p=0.9,
-                num_return_sequences=1
+                no_repeat_ngram_size=2
             )
 
             options = []
-            generated_text = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            generated_text = output[0]['generated_text']
 
-            # Clean and extract options
+            # Process the generated text to extract options
             for line in generated_text.split('\n'):
                 clean_option = self._clean_option_text(line)
                 if clean_option and clean_option not in options:
                     options.append(clean_option)
 
-            # Ensure we have exactly 4 options
-            while len(options) < 4:
-                fallback = self._generate_fallback_option(question, topic)
-                if fallback and fallback not in options:
-                    options.append(fallback)
+            # If we don't have enough options, generate more
+            if len(options) < 4:
+                remaining_options = self._generate_additional_options(
+                    question, topic, 4 - len(options)
+                )
+                options.extend(remaining_options)
 
             return options[:4]
 
@@ -84,59 +87,54 @@ class QuestionHandler:
 
     def _clean_option_text(self, text: str) -> str:
         """Clean up generated option text"""
-        # Remove prefixes and clean up
         text = text.strip()
-        prefixes = ['option:', 'answer:', 'correct:', 'incorrect:', '-', '*', '1.', '2.', '3.', '4.']
+
+        # Remove common prefixes
+        prefixes = ['correct:', 'wrong:', 'option:', 'answer:', '-', '*', '1.', '2.', '3.', '4.']
         for prefix in prefixes:
             if text.lower().startswith(prefix.lower()):
                 text = text[len(prefix):].strip()
 
-        # Remove if too short or contains unwanted patterns
-        if len(text) < 3 or 'generate' in text.lower() or 'option' in text.lower():
+        # Additional cleaning
+        if len(text) < 3 or any(word in text.lower() for word in ['generate', 'option', 'answer']):
             return ""
 
         return text
 
-    def _generate_fallback_option(self, question: str, topic: str) -> str:
-        """Generate a single fallback option"""
-        try:
-            prompt = f"Generate a brief, incorrect answer for: {question}"
-            inputs = self.tokenizer.encode(prompt, return_tensors="pt")
-            outputs = self.model.generate(
-                inputs,
-                max_length=50,
-                min_length=5,
-                do_sample=True,
-                temperature=0.8
-            )
-            return self._clean_option_text(self.tokenizer.decode(outputs[0], skip_special_tokens=True))
-        except:
-            return f"Alternative answer about {topic}"
-
-    def _generate_fallback_options(self, question: str, topic: str) -> List[str]:
-        """Generate options one by one if the batch generation fails"""
+    def _generate_additional_options(self, question: str, topic: str, num_needed: int) -> List[str]:
+        """Generate additional options if needed"""
         options = []
-        prompts = [
-            f"What is the correct answer to: {question}",
-            f"Generate an incorrect but plausible answer to: {question}",
-            f"Generate another incorrect but plausible answer to: {question}",
-            f"Generate one more incorrect but plausible answer to: {question}"
-        ]
+        prompt = f"""
+Generate a plausible but incorrect answer for this question:
+{question}
+Requirements:
+- Must be related to {topic}
+- Must be clearly wrong but believable
+- Keep it concise"""
 
-        for prompt in prompts:
+        for _ in range(num_needed):
             try:
-                inputs = self.tokenizer.encode(prompt, return_tensors="pt")
-                outputs = self.model.generate(
-                    inputs,
+                output = self.generator(
+                    prompt,
                     max_length=50,
                     min_length=10,
                     do_sample=True,
                     temperature=0.8
                 )
-                option = self.tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+
+                option = self._clean_option_text(output[0]['generated_text'])
                 if option and option not in options:
                     options.append(option)
             except:
-                options.append(f"Option {len(options) + 1} for {topic}")
+                options.append(f"Alternative answer about {topic}")
 
-        return options[:4]
+        return options
+
+    def _generate_fallback_options(self, question: str, topic: str) -> List[str]:
+        """Generate basic fallback options if all else fails"""
+        return [
+            f"The correct answer about {topic}",
+            f"A common misconception in {topic}",
+            f"An incorrect approach to {topic}",
+            f"Another incorrect solution for {topic}"
+        ]

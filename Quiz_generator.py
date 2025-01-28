@@ -1,4 +1,4 @@
-from transformers import T5ForConditionalGeneration, T5Tokenizer
+from transformers import pipeline
 from utils.question_handler import QuestionHandler
 from utils.result_handler import ResultHandler
 from utils.quiz_history import QuizHistory
@@ -7,55 +7,54 @@ import random
 class QuizGenerator:
     def __init__(self):
         print("Loading pre-trained model...")
-        self.model_name = "t5-base"
-        self.tokenizer = T5Tokenizer.from_pretrained(self.model_name)
-        self.model = T5ForConditionalGeneration.from_pretrained(self.model_name)
+        # Change this part to use BART
+        self.generator = pipeline('text2text-generation', model='facebook/bart-large-cnn')
         self.question_handler = QuestionHandler()
         self.history = QuizHistory()
         self.result_handler = ResultHandler()
         self.current_quiz = None
 
+    # The generate_quiz method needs to be adjusted for BART's output format
     def generate_quiz(self, topic: str, difficulty: str, num_questions: int) -> dict:
         """Generate a quiz with specified number of questions"""
         questions = []
 
-        # Simplified, direct prompts
-        template = {
-            'easy': f"Create a basic question about {topic} that tests fundamental knowledge.",
-            'medium': f"Create an intermediate question about {topic} that tests understanding.",
-            'hard': f"Create an advanced question about {topic} that tests deep knowledge."
+        # Better structured prompts based on difficulty
+        difficulty_prompts = {
+            'easy': f"Write a straightforward multiple-choice question about {topic} that tests basic understanding.",
+            'medium': f"Create a challenging multiple-choice question about {topic} that requires good knowledge.",
+            'hard': f"Generate a complex multiple-choice question about {topic} that tests advanced concepts."
         }
 
         for _ in range(num_questions):
             prompt = f"""
-            {template[difficulty]}
-            Requirements:
-            - Clear, single-sentence question
-            - Must end with a question mark
-            - Focus on specific concepts
-            - No instructions or prefixes
-            """
+Question: {difficulty_prompts[difficulty]}
+Requirements:
+- Must be clear and concise
+- Focus on {topic} concepts
+- Include context if needed
+Example format:
+What is the primary purpose of inheritance in object-oriented programming?"""
 
             try:
-                inputs = self.tokenizer.encode(prompt, return_tensors="pt", max_length=512, truncation=True)
-                outputs = self.model.generate(
-                    inputs,
+                # BART specific generation
+                output = self.generator(
+                    prompt,
                     max_length=100,
                     min_length=20,
                     do_sample=True,
-                    temperature=0.8,
-                    top_p=0.9,
-                    num_return_sequences=1
+                    temperature=0.7,
+                    no_repeat_ngram_size=2
                 )
 
-                generated_question = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+                # Clean up generated question
+                generated_question = output[0]['generated_text']
+                generated_question = self._clean_question(generated_question)
 
-                # Clean up the question
-                clean_question = self._clean_generated_text(generated_question)
-
-                if clean_question:
+                # Create full question with options
+                if generated_question:
                     question = self.question_handler.create_question(
-                        clean_question,
+                        generated_question,
                         topic,
                         difficulty
                     )
@@ -76,26 +75,20 @@ class QuizGenerator:
         self.history.add_quiz(quiz)
         return quiz
 
-    def _clean_generated_text(self, text: str) -> str:
-        """Clean up generated text to create a proper question"""
-        # Remove multiple spaces and newlines
-        text = ' '.join(text.split())
+    def _clean_question(self, text: str) -> str:
+        """Clean up the generated question text"""
+        # Get the first line that ends with a question mark
+        for line in text.split('\n'):
+            line = line.strip()
+            if line.endswith('?'):
+                # Remove any prefixes like "Question:", "Q:", etc.
+                for prefix in ["question:", "q:", "answer:", "example:"]:
+                    if line.lower().startswith(prefix):
+                        line = line[len(prefix):].strip()
+                return line
 
-        # Remove any prefixes like "Question:", "Q:", etc.
-        prefixes_to_remove = ["question:", "q:", "task:", "generate"]
-        for prefix in prefixes_to_remove:
-            if text.lower().startswith(prefix):
-                text = text[len(prefix):].strip()
-
-        # Ensure it ends with a question mark
-        if not text.endswith('?'):
-            text += '?'
-
-        # Remove any remaining instruction-like text
-        if 'generate' in text.lower() or 'create' in text.lower():
-            return ""
-
-        return text
+        # If no good question found, return empty string
+        return ""
 
 def main():
     quiz_gen = QuizGenerator()
