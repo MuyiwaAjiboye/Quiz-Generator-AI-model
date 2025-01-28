@@ -19,50 +19,56 @@ class QuizGenerator:
         """Generate a quiz with specified number of questions"""
         questions = []
 
-        # Better structured prompts based on difficulty
-        difficulty_prompts = {
-            'easy': f"Write a straightforward multiple-choice question about {topic} that tests basic understanding.",
-            'medium': f"Create a challenging multiple-choice question about {topic} that requires good knowledge.",
-            'hard': f"Generate a complex multiple-choice question about {topic} that tests advanced concepts."
+        # More specific computing-related prompt
+        prompt_template = {
+            'easy': f"Generate a basic multiple choice question testing {topic} knowledge. The question should be clear and end with a question mark.",
+            'medium': f"Create an intermediate multiple choice question about {topic}. The question should be specific and end with a question mark.",
+            'hard': f"Write an advanced multiple choice question about {topic}. The question should be challenging and end with a question mark."
         }
 
         for _ in range(num_questions):
-            prompt = f"""
-Question: {difficulty_prompts[difficulty]}
-Requirements:
-- Must be clear and concise
-- Focus on {topic} concepts
-- Include context if needed
-Example format:
-What is the primary purpose of inheritance in object-oriented programming?"""
-
             try:
-                # BART specific generation
+                # Generate the question
                 output = self.generator(
-                    prompt,
+                    prompt_template[difficulty],
                     max_length=100,
                     min_length=20,
                     do_sample=True,
                     temperature=0.7,
-                    no_repeat_ngram_size=2
+                    top_p=0.9
                 )
 
-                # Clean up generated question
-                generated_question = output[0]['generated_text']
-                generated_question = self._clean_question(generated_question)
+                generated_text = output[0]['generated_text'].strip()
+                print(f"DEBUG: Generated raw text: {generated_text}")  # Debug line
 
-                # Create full question with options
-                if generated_question:
+                # Clean up the question
+                clean_question = self._clean_question(generated_text)
+                print(f"DEBUG: Cleaned question: {clean_question}")  # Debug line
+
+                if clean_question:
+                    # Create question with options
                     question = self.question_handler.create_question(
-                        generated_question,
+                        clean_question,
                         topic,
                         difficulty
                     )
                     questions.append(question)
+                    print(f"Question generated successfully: {clean_question}")  # Success message
+                else:
+                    print("Failed to generate a valid question, trying again...")
+                    continue
 
             except Exception as e:
-                print(f"Error generating question: {e}")
+                print(f"Error during question generation: {e}")
                 continue
+
+        # If we couldn't generate any questions
+        if not questions:
+            print("\nTroubleshooting tips:")
+            print("1. Try a more specific computing topic")
+            print("2. Check if the topic is computing-related")
+            print("3. Try a different difficulty level")
+            print("4. Make sure the topic is spelled correctly")
 
         quiz = {
             'topic': topic,
@@ -77,18 +83,24 @@ What is the primary purpose of inheritance in object-oriented programming?"""
 
     def _clean_question(self, text: str) -> str:
         """Clean up the generated question text"""
-        # Get the first line that ends with a question mark
-        for line in text.split('\n'):
+        # Split into lines and process each one
+        lines = text.split('\n')
+        for line in lines:
             line = line.strip()
+            # Look for a line that ends with a question mark
             if line.endswith('?'):
-                # Remove any prefixes like "Question:", "Q:", etc.
-                for prefix in ["question:", "q:", "answer:", "example:"]:
+                # Remove common prefixes
+                prefixes = ["question:", "q:", "answer:", "example:"]
+                for prefix in prefixes:
                     if line.lower().startswith(prefix):
                         line = line[len(prefix):].strip()
                 return line
 
-        # If no good question found, return empty string
-        return ""
+        # If no line ends with ?, try to fix the text
+        text = text.strip()
+        if text and not text.endswith('?'):
+            text += '?'
+        return text
 
 def main():
     quiz_gen = QuizGenerator()

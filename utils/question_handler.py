@@ -39,20 +39,15 @@ class QuestionHandler:
     def _generate_options_from_text(self, question: str, topic: str, difficulty: str) -> List[str]:
         """Generate relevant options for the question"""
         try:
+            # More direct prompt
             option_prompt = f"""
-    Generate 4 multiple-choice options for this question:
     Question: {question}
-    Requirements:
-    1. First option must be the correct answer
-    2. Other options must be plausible but incorrect
-    3. Each option must be unique and related to {topic}
-    4. Keep options concise and clear
-
-    Format example:
-    Correct: [The correct answer]
-    Wrong: [First incorrect answer]
-    Wrong: [Second incorrect answer]
-    Wrong: [Third incorrect answer]"""
+    Generate exactly 4 answer choices where:
+    - First must be the correct answer
+    - Others must be incorrect but plausible
+    - Each must be brief and clear
+    - All must relate to {topic}
+    """
 
             output = self.generator(
                 option_prompt,
@@ -60,29 +55,51 @@ class QuestionHandler:
                 min_length=20,
                 do_sample=True,
                 temperature=0.7,
-                no_repeat_ngram_size=2
+                top_p=0.9
             )
 
             options = []
             generated_text = output[0]['generated_text']
+            print(f"DEBUG: Generated options text: {generated_text}")  # Debug line
 
-            # Process the generated text to extract options
-            for line in generated_text.split('\n'):
+            # Process the generated text
+            lines = generated_text.split('\n')
+            for line in lines:
                 clean_option = self._clean_option_text(line)
                 if clean_option and clean_option not in options:
                     options.append(clean_option)
 
             # If we don't have enough options, generate more
             while len(options) < 4:
-                additional = self._generate_additional_options(question, topic, 1)
-                if additional and additional[0] not in options:
-                    options.extend(additional)
+                new_option = self._generate_single_option(question, topic)
+                if new_option and new_option not in options:
+                    options.append(new_option)
 
-            return options[:4] if len(options) >= 4 else self._generate_fallback_options(question, topic)
+            return options[:4]
 
         except Exception as e:
-            print(f"Error generating options: {e}")
-            return self._generate_fallback_options(question, topic)
+            print(f"Error in option generation: {e}")
+            return [
+                f"The main concept in {topic}",
+                f"A related but incorrect concept in {topic}",
+                f"Another incorrect concept in {topic}",
+                f"A different incorrect concept in {topic}"
+            ]
+
+    def _generate_single_option(self, question: str, topic: str) -> str:
+        """Generate a single option"""
+        try:
+            prompt = f"Generate one plausible but incorrect answer for this question about {topic}: {question}"
+            output = self.generator(
+                prompt,
+                max_length=50,
+                min_length=10,
+                do_sample=True,
+                temperature=0.8
+            )
+            return self._clean_option_text(output[0]['generated_text'])
+        except:
+            return f"An alternative concept in {topic}"
 
     def _clean_option_text(self, text: str) -> str:
         """Clean up generated option text"""
