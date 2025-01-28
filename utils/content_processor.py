@@ -67,9 +67,10 @@ class ContentProcessor:
                 input_ids,
                 max_length=64,
                 min_length=20,
+                 do_sample=True,
                 num_beams=5,
                 no_repeat_ngram_size=2,
-                do_sample=True,
+
                 temperature=0.7,
                 top_p=0.95
             )
@@ -96,6 +97,7 @@ class ContentProcessor:
                 input_ids,
                 max_length=128,
                 min_length=20,
+                do_sample=True,
                 num_beams=4,
                 temperature=0.7,
                 top_p=0.9
@@ -129,6 +131,7 @@ class ContentProcessor:
                     input_ids,
                     max_length=64,
                     min_length=10,
+                    do_sample=True,
                     num_beams=4,
                     temperature=0.8,
                     top_p=0.9,
