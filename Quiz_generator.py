@@ -1,154 +1,148 @@
-from transformers import pipeline
+from transformers import T5ForConditionalGeneration, T5Tokenizer
+from utils.content_processor import ContentProcessor
 from utils.question_handler import QuestionHandler
 from utils.result_handler import ResultHandler
-from utils.quiz_history import QuizHistory
-import random
+import torch
 
 class QuizGenerator:
     def __init__(self):
-        print("Loading pre-trained model...")
-        # Change this part to use BART
-        self.generator = pipeline('text2text-generation', model='facebook/bart-large-cnn')
+        print("Initializing Quiz Generator...")
+        print("Loading T5 model (this might take a few moments)...")
+        self.tokenizer = T5Tokenizer.from_pretrained('t5-base')
+        self.model = T5ForConditionalGeneration.from_pretrained('t5-base')
+        self.content_processor = ContentProcessor()
         self.question_handler = QuestionHandler()
-        self.history = QuizHistory()
         self.result_handler = ResultHandler()
         self.current_quiz = None
 
-    # The generate_quiz method needs to be adjusted for BART's output format
-    def generate_quiz(self, topic: str, difficulty: str, num_questions: int) -> dict:
-        """Generate a quiz with specified number of questions"""
-        questions = []
+    def _generate_question_from_text(self, text: str) -> str:
+        """Generate a question using T5 model"""
+        # Prepare input text
+        input_text = f"generate question: {text}"
+        input_ids = self.tokenizer.encode(input_text, return_tensors='pt', max_length=512, truncation=True)
 
-        # More directive prompts for different difficulties
-        prompts = {
-            'easy': [
-                f"What is the basic purpose of {topic}?",
-                f"Which HTML tag is used for {topic}?",
-                f"What is the main function of {topic}?",
-                f"How do you create a {topic}?"
-            ],
-            'medium': [
-                f"What is the difference between {topic} and related concepts?",
-                f"How does {topic} work in practice?",
-                f"When should you use {topic}?",
-                f"What are the key features of {topic}?"
-            ],
-            'hard': [
-                f"What are the advanced applications of {topic}?",
-                f"How do you optimize {topic}?",
-                f"What are the best practices for {topic}?",
-                f"Explain the complex aspects of {topic}?"
-            ]
-        }
+        # Generate question
+        outputs = self.model.generate(
+            input_ids,
+            max_length=64,
+            min_length=10,
+            num_beams=4,
+            no_repeat_ngram_size=2,
+            do_sample=True,
+            temperature=0.7,
+            top_p=0.9,
+            num_return_sequences=1
+        )
 
-        for _ in range(num_questions):
-            try:
-                # Select a random prompt template
-                base_prompt = random.choice(prompts[difficulty])
+        # Decode and return the generated question
+        question = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return question
 
-                # Generate the question
-                output = self.generator(
-                    base_prompt,
-                    max_length=100,
-                    min_length=20,
-                    do_sample=True,
-                    temperature=0.8,
-                    top_p=0.9,
-                    num_beams=4
-                )
+    def generate_quiz(self, topic: str, num_questions: int):
+        """Generate a quiz for the given topic"""
+        # Get content for the topic
+        content = self.content_processor.get_content(topic)
+        training_data = self.content_processor.get_training_data(topic)
 
-                generated_text = output[0]['generated_text'].strip()
-                print(f"Generated question: {generated_text}")  # Debug line
+        if not content:
+            available_topics = self.content_processor.get_available_topics()
+            print(f"\nTopic not found.")
+            print(f"Available topics: {', '.join(available_topics)}")
+            return None
 
-                # Clean up the question
-                clean_question = self._clean_question(generated_text)
+        try:
+            # Split content into meaningful sections
+            sections = [s.strip() for s in content.split('\n') if len(s.strip()) > 50]
+            questions = []
 
-                if clean_question and "generate" not in clean_question.lower():
-                    question = self.question_handler.create_question(
-                        clean_question,
-                        topic,
-                        difficulty
-                    )
-                    questions.append(question)
-                    print(f"Successfully generated question: {clean_question}")
+            for _ in range(min(num_questions, len(sections))):
+                section = sections[_]
+
+                # Generate question using T5
+                generated_question = self._generate_question_from_text(section)
+
+                # Use training data to help generate better options
+                if training_data:
+                    # Use existing options from training data as templates
+                    template = random.choice(training_data)
+                    options_style = template['wrong_answers']
                 else:
-                    print("Retrying question generation...")
-                    continue
+                    # Generate basic options if no training data
+                    options_style = [
+                        f"This is incorrect because...",
+                        f"This is a common misconception...",
+                        f"This is not accurate because..."
+                    ]
 
-            except Exception as e:
-                print(f"Error during question generation: {e}")
-                continue
+                # Create question dict with generated content
+                question = {
+                    'question': generated_question,
+                    'options': [section] + options_style[:3],  # Use first 3 wrong answers
+                    'correct_answer': section
+                }
 
-        quiz = {
-            'topic': topic,
-            'difficulty': difficulty,
-            'questions': questions,
-            'timestamp': self.history.get_timestamp()
-        }
+                # Shuffle options
+                random.shuffle(question['options'])
+                questions.append(question)
 
-        self.current_quiz = quiz
-        self.history.add_quiz(quiz)
-        return quiz
+            self.current_quiz = questions
+            return questions
 
-    def _clean_question(self, text: str) -> str:
-        """Clean up the generated question text"""
-        # Split into lines and process each one
-        lines = text.split('\n')
-        for line in lines:
-            line = line.strip()
-            # Look for a line that ends with a question mark
-            if line.endswith('?'):
-                # Remove common prefixes
-                prefixes = ["question:", "q:", "answer:", "example:"]
-                for prefix in prefixes:
-                    if line.lower().startswith(prefix):
-                        line = line[len(prefix):].strip()
-                return line
+        except Exception as e:
+            print(f"Error generating quiz: {e}")
+            return None
 
-        # If no line ends with ?, try to fix the text
-        text = text.strip()
-        if text and not text.endswith('?'):
-            text += '?'
-        return text
+    def run_quiz(self):
+        """Run the quiz application"""
+        while True:
+            print("\n=== Quiz Generator ===")
+            print("Available topics:", ", ".join(self.content_processor.get_available_topics()))
 
-def main():
-    quiz_gen = QuizGenerator()
-
-    while True:
-        print("\n=== Quiz Generator ===")
-        print("1. Generate new quiz")
-        print("2. View history")
-        print("3. Exit")
-
-        choice = input("\nChoice: ")
-
-        if choice == '1':
-            topic = input("Enter topic (e.g., Python, JavaScript, Databases): ")
-            difficulty = input("Enter difficulty (easy/medium/hard): ").lower()
-            while difficulty not in ['easy', 'medium', 'hard']:
-                print("Invalid difficulty! Please choose easy, medium, or hard.")
-                difficulty = input("Enter difficulty: ").lower()
+            topic = input("\nEnter topic (or 'exit' to quit): ").lower()
+            if topic == 'exit':
+                break
 
             try:
                 num_questions = int(input("How many questions would you like? "))
                 if num_questions <= 0:
-                    raise ValueError
-            except ValueError:
-                print("Please enter a valid number greater than 0")
-                continue
+                    raise ValueError("Number of questions must be positive")
 
-            quiz = quiz_gen.generate_quiz(topic, difficulty, num_questions)
+                print("\nGenerating quiz using T5 model...")
+                quiz = self.generate_quiz(topic, num_questions)
 
-            # Check if questions were generated successfully
-            if not quiz['questions']:
-                print("\nFailed to generate questions. Please try again.")
-                continue
+                if quiz:
+                    # Display the quiz questions
+                    self.result_handler.display_quiz(quiz)
 
-            user_answers = quiz_gen.result_handler.take_quiz(quiz)
+                    # Ask if user wants to see answers
+                    while True:
+                        show_answers = input("\nWould you like to see the answers? (yes/no): ").lower()
+                        if show_answers in ['yes', 'no']:
+                            break
+                        print("Please enter 'yes' or 'no'")
 
-            # Only show results if there are answers
-            if user_answers:
-                quiz_gen.result_handler.show_results(quiz, user_answers)
+                    # Show answers if requested
+                    if show_answers == 'yes':
+                        self.result_handler.show_answers(quiz)
+
+            except ValueError as e:
+                print(f"Error: {e}")
+                print("Please enter a valid number of questions.")
+            except Exception as e:
+                print(f"An unexpected error occurred: {e}")
+                print("Please try again.")
+
+def main():
+    try:
+        print("Starting Quiz Generator...")
+        quiz_gen = QuizGenerator()
+        quiz_gen.run_quiz()
+    except KeyboardInterrupt:
+        print("\nQuiz Generator terminated by user.")
+    except Exception as e:
+        print(f"\nAn error occurred: {e}")
+    finally:
+        print("\nThank you for using Quiz Generator!")
 
 if __name__ == "__main__":
     main()

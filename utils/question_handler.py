@@ -1,156 +1,200 @@
-from typing import List, Dict
 import random
-from transformers import pipeline
+from transformers import T5ForConditionalGeneration, T5Tokenizer
 
 class QuestionHandler:
     def __init__(self):
-        print("Initializing question handler...")
-        self.generator = pipeline('text2text-generation', model='facebook/bart-large-cnn')
-        self.option_count = 4
+        print("Initializing Question Handler...")
+        # Initialize T5 model and tokenizer for option generation
+        self.tokenizer = T5Tokenizer.from_pretrained('t5-base')
+        self.model = T5ForConditionalGeneration.from_pretrained('t5-base')
 
-    def create_question(self, question_text: str, topic: str, difficulty: str) -> Dict:
-        """Create a complete question with options"""
-        # Format the question
-        question = self._format_question(question_text)
+    def create_questions(self, training_data: list, content_section: str, num_questions: int) -> list:
+        """Create questions using T5 model and training data"""
+        questions = []
 
-        # Generate options including correct answer
-        options = self._generate_options_from_text(question, topic, difficulty)
-
-        # Store correct answer before shuffling
-        correct_answer = options[0]
-
-        # Randomly shuffle options
-        random.shuffle(options)
-
-        return {
-            'question': question,
-            'options': options,
-            'correct_answer': correct_answer,
-            'difficulty': difficulty
-        }
-
-    def _format_question(self, text: str) -> str:
-        """Format the question text properly"""
-        text = text.strip()
-        if not text.endswith('?'):
-            text += '?'
-        return text
-
-    def _generate_options_from_text(self, question: str, topic: str, difficulty: str) -> List[str]:
-        """Generate relevant options for the question"""
         try:
-            # More specific prompt
-            option_prompt = f"For the HTML question: '{question}', list 4 possible answers:"
+            for _ in range(num_questions):
+                # Generate question using T5
+                question_text = self._generate_question(content_section)
 
-            output = self.generator(
-                option_prompt,
-                max_length=150,
-                min_length=20,
+                # Generate options including correct answer
+                options = self._generate_options(content_section, question_text, training_data)
+
+                if question_text and options:
+                    question = {
+                        'question': question_text,
+                        'options': options['all_options'],
+                        'correct_answer': options['correct_answer']
+                    }
+                    questions.append(question)
+
+        except Exception as e:
+            print(f"Error in question creation: {e}")
+
+        return questions
+
+    def _generate_question(self, content: str) -> str:
+        """Generate a question using T5 model"""
+        try:
+            # Prepare input for question generation
+            input_text = f"generate question: {content}"
+            input_ids = self.tokenizer.encode(
+                input_text,
+                return_tensors='pt',
+                max_length=512,
+                truncation=True
+            )
+
+            # Generate question
+            outputs = self.model.generate(
+                input_ids,
+                max_length=64,
+                min_length=10,
+                num_beams=4,
+                no_repeat_ngram_size=2,
                 do_sample=True,
                 temperature=0.7,
                 top_p=0.9,
-                num_beams=4
+                num_return_sequences=1
             )
 
-            generated_text = output[0]['generated_text']
-            print(f"Generated options: {generated_text}")  # Debug line
+            # Decode and clean up the generated question
+            question = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            return self._clean_question(question)
 
-            options = []
-            for line in generated_text.split('\n'):
-                clean_option = self._clean_option_text(line)
-                if clean_option and len(clean_option) > 2 and clean_option not in options:
-                    options.append(clean_option)
+        except Exception as e:
+            print(f"Error in question generation: {e}")
+            return None
 
-            # Ensure we have 4 options
-            while len(options) < 4:
-                fallback_options = [
-                    f"<{topic}> tag",
-                    f"<div> with {topic}",
-                    f"CSS {topic} property",
-                    f"JavaScript {topic} function"
-                ]
-                for opt in fallback_options:
-                    if opt not in options:
-                        options.append(opt)
-                        if len(options) >= 4:
-                            break
+    def _generate_options(self, content: str, question: str, training_data: list) -> dict:
+        """Generate options including correct and wrong answers"""
+        try:
+            # Extract correct answer using T5
+            answer_input = f"answer question: {question} context: {content}"
+            answer_ids = self.tokenizer.encode(
+                answer_input,
+                return_tensors='pt',
+                max_length=512,
+                truncation=True
+            )
 
-            return options[:4]
+            answer_outputs = self.model.generate(
+                answer_ids,
+                max_length=64,
+                min_length=5,
+                num_beams=4,
+                no_repeat_ngram_size=2,
+                do_sample=True,
+                temperature=0.7,
+                top_p=0.9,
+                num_return_sequences=1
+            )
+
+            correct_answer = self.tokenizer.decode(answer_outputs[0], skip_special_tokens=True)
+
+            # Generate wrong options
+            wrong_options = self._generate_wrong_options(
+                content,
+                correct_answer,
+                question,
+                training_data
+            )
+
+            # Combine and shuffle options
+            all_options = [correct_answer] + wrong_options
+            random.shuffle(all_options)
+
+            return {
+                'all_options': all_options,
+                'correct_answer': correct_answer
+            }
 
         except Exception as e:
             print(f"Error in option generation: {e}")
+            return None
+
+    def _generate_wrong_options(self, content: str, correct_answer: str, question: str, training_data: list) -> list:
+        """Generate wrong options using T5 and training data"""
+        wrong_options = []
+
+        try:
+            # First, try to use training data as templates
+            if training_data:
+                template = random.choice(training_data)
+                wrong_options.extend(template['wrong_answers'][:2])
+
+            # Generate additional wrong options using T5
+            wrong_input = f"generate incorrect answer: {question} correct answer: {correct_answer}"
+            wrong_ids = self.tokenizer.encode(
+                wrong_input,
+                return_tensors='pt',
+                max_length=512,
+                truncation=True
+            )
+
+            wrong_outputs = self.model.generate(
+                wrong_ids,
+                max_length=64,
+                min_length=5,
+                num_beams=4,
+                no_repeat_ngram_size=2,
+                do_sample=True,
+                temperature=0.9,
+                top_p=0.9,
+                num_return_sequences=2
+            )
+
+            # Add model-generated wrong options
+            for output in wrong_outputs:
+                wrong_option = self.tokenizer.decode(output, skip_special_tokens=True)
+                if wrong_option != correct_answer and wrong_option not in wrong_options:
+                    wrong_options.append(wrong_option)
+
+            # Ensure we have exactly 3 wrong options
+            while len(wrong_options) < 3:
+                wrong_options.append(f"Alternative explanation of {content.split()[0]}")
+
+            return wrong_options[:3]  # Return exactly 3 wrong options
+
+        except Exception as e:
+            print(f"Error in wrong option generation: {e}")
             return [
-                f"<{topic}> tag",
-                f"<div> with {topic}",
-                f"CSS {topic} property",
-                f"JavaScript {topic} function"
+                f"Alternative explanation 1",
+                f"Alternative explanation 2",
+                f"Alternative explanation 3"
             ]
 
-    def _generate_single_option(self, question: str, topic: str) -> str:
-        """Generate a single option"""
-        try:
-            prompt = f"Generate one plausible but incorrect answer for this question about {topic}: {question}"
-            output = self.generator(
-                prompt,
-                max_length=50,
-                min_length=10,
-                do_sample=True,
-                temperature=0.8
-            )
-            return self._clean_option_text(output[0]['generated_text'])
-        except:
-            return f"An alternative concept in {topic}"
-
-    def _clean_option_text(self, text: str) -> str:
-        """Clean up generated option text"""
-        text = text.strip()
+    def _clean_question(self, question: str) -> str:
+        """Clean up the generated question"""
+        question = question.strip()
 
         # Remove common prefixes
-        prefixes = ['correct:', 'wrong:', 'option:', 'answer:', '-', '*', '1.', '2.', '3.', '4.']
+        prefixes = ['question:', 'q:', 'generate question:', 'ask:']
         for prefix in prefixes:
-            if text.lower().startswith(prefix.lower()):
-                text = text[len(prefix):].strip()
+            if question.lower().startswith(prefix):
+                question = question[len(prefix):].strip()
 
-        # Additional cleaning
-        if len(text) < 3 or any(word in text.lower() for word in ['generate', 'option', 'answer']):
-            return ""
+        # Ensure question ends with question mark
+        if not question.endswith('?'):
+            question += '?'
 
-        return text
+        return question
 
-    def _generate_additional_options(self, question: str, topic: str, num_needed: int) -> List[str]:
-        """Generate additional options if needed"""
-        options = []
-        prompt = f"""
-Generate a plausible but incorrect answer for this question:
-{question}
-Requirements:
-- Must be related to {topic}
-- Must be clearly wrong but believable
-- Keep it concise"""
+    def validate_question(self, question: dict) -> bool:
+        """Validate generated question and options"""
+        if not question.get('question') or not question.get('options'):
+            return False
 
-        for _ in range(num_needed):
-            try:
-                output = self.generator(
-                    prompt,
-                    max_length=50,
-                    min_length=10,
-                    do_sample=True,
-                    temperature=0.8
-                )
+        # Check if question ends with question mark
+        if not question['question'].endswith('?'):
+            return False
 
-                option = self._clean_option_text(output[0]['generated_text'])
-                if option and option not in options:
-                    options.append(option)
-            except:
-                options.append(f"Alternative answer about {topic}")
+        # Check if we have exactly 4 options
+        if len(question['options']) != 4:
+            return False
 
-        return options
+        # Check if correct answer is in options
+        if question['correct_answer'] not in question['options']:
+            return False
 
-    def _generate_fallback_options(self, question: str, topic: str) -> List[str]:
-        """Generate basic fallback options if all else fails"""
-        return [
-            f"The correct answer about {topic}",
-            f"A common misconception in {topic}",
-            f"An incorrect approach to {topic}",
-            f"Another incorrect solution for {topic}"
-        ]
+        return True
