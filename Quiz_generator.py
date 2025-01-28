@@ -19,56 +19,65 @@ class QuizGenerator:
         """Generate a quiz with specified number of questions"""
         questions = []
 
-        # More specific computing-related prompt
-        prompt_template = {
-            'easy': f"Generate a basic multiple choice question testing {topic} knowledge. The question should be clear and end with a question mark.",
-            'medium': f"Create an intermediate multiple choice question about {topic}. The question should be specific and end with a question mark.",
-            'hard': f"Write an advanced multiple choice question about {topic}. The question should be challenging and end with a question mark."
+        # More directive prompts for different difficulties
+        prompts = {
+            'easy': [
+                f"What is the basic purpose of {topic}?",
+                f"Which HTML tag is used for {topic}?",
+                f"What is the main function of {topic}?",
+                f"How do you create a {topic}?"
+            ],
+            'medium': [
+                f"What is the difference between {topic} and related concepts?",
+                f"How does {topic} work in practice?",
+                f"When should you use {topic}?",
+                f"What are the key features of {topic}?"
+            ],
+            'hard': [
+                f"What are the advanced applications of {topic}?",
+                f"How do you optimize {topic}?",
+                f"What are the best practices for {topic}?",
+                f"Explain the complex aspects of {topic}?"
+            ]
         }
 
         for _ in range(num_questions):
             try:
+                # Select a random prompt template
+                base_prompt = random.choice(prompts[difficulty])
+
                 # Generate the question
                 output = self.generator(
-                    prompt_template[difficulty],
+                    base_prompt,
                     max_length=100,
                     min_length=20,
                     do_sample=True,
-                    temperature=0.7,
-                    top_p=0.9
+                    temperature=0.8,
+                    top_p=0.9,
+                    num_beams=4
                 )
 
                 generated_text = output[0]['generated_text'].strip()
-                print(f"DEBUG: Generated raw text: {generated_text}")  # Debug line
+                print(f"Generated question: {generated_text}")  # Debug line
 
                 # Clean up the question
                 clean_question = self._clean_question(generated_text)
-                print(f"DEBUG: Cleaned question: {clean_question}")  # Debug line
 
-                if clean_question:
-                    # Create question with options
+                if clean_question and "generate" not in clean_question.lower():
                     question = self.question_handler.create_question(
                         clean_question,
                         topic,
                         difficulty
                     )
                     questions.append(question)
-                    print(f"Question generated successfully: {clean_question}")  # Success message
+                    print(f"Successfully generated question: {clean_question}")
                 else:
-                    print("Failed to generate a valid question, trying again...")
+                    print("Retrying question generation...")
                     continue
 
             except Exception as e:
                 print(f"Error during question generation: {e}")
                 continue
-
-        # If we couldn't generate any questions
-        if not questions:
-            print("\nTroubleshooting tips:")
-            print("1. Try a more specific computing topic")
-            print("2. Check if the topic is computing-related")
-            print("3. Try a different difficulty level")
-            print("4. Make sure the topic is spelled correctly")
 
         quiz = {
             'topic': topic,

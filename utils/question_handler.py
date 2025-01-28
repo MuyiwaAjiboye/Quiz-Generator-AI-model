@@ -39,15 +39,8 @@ class QuestionHandler:
     def _generate_options_from_text(self, question: str, topic: str, difficulty: str) -> List[str]:
         """Generate relevant options for the question"""
         try:
-            # More direct prompt
-            option_prompt = f"""
-    Question: {question}
-    Generate exactly 4 answer choices where:
-    - First must be the correct answer
-    - Others must be incorrect but plausible
-    - Each must be brief and clear
-    - All must relate to {topic}
-    """
+            # More specific prompt
+            option_prompt = f"For the HTML question: '{question}', list 4 possible answers:"
 
             output = self.generator(
                 option_prompt,
@@ -55,35 +48,42 @@ class QuestionHandler:
                 min_length=20,
                 do_sample=True,
                 temperature=0.7,
-                top_p=0.9
+                top_p=0.9,
+                num_beams=4
             )
 
-            options = []
             generated_text = output[0]['generated_text']
-            print(f"DEBUG: Generated options text: {generated_text}")  # Debug line
+            print(f"Generated options: {generated_text}")  # Debug line
 
-            # Process the generated text
-            lines = generated_text.split('\n')
-            for line in lines:
+            options = []
+            for line in generated_text.split('\n'):
                 clean_option = self._clean_option_text(line)
-                if clean_option and clean_option not in options:
+                if clean_option and len(clean_option) > 2 and clean_option not in options:
                     options.append(clean_option)
 
-            # If we don't have enough options, generate more
+            # Ensure we have 4 options
             while len(options) < 4:
-                new_option = self._generate_single_option(question, topic)
-                if new_option and new_option not in options:
-                    options.append(new_option)
+                fallback_options = [
+                    f"<{topic}> tag",
+                    f"<div> with {topic}",
+                    f"CSS {topic} property",
+                    f"JavaScript {topic} function"
+                ]
+                for opt in fallback_options:
+                    if opt not in options:
+                        options.append(opt)
+                        if len(options) >= 4:
+                            break
 
             return options[:4]
 
         except Exception as e:
             print(f"Error in option generation: {e}")
             return [
-                f"The main concept in {topic}",
-                f"A related but incorrect concept in {topic}",
-                f"Another incorrect concept in {topic}",
-                f"A different incorrect concept in {topic}"
+                f"<{topic}> tag",
+                f"<div> with {topic}",
+                f"CSS {topic} property",
+                f"JavaScript {topic} function"
             ]
 
     def _generate_single_option(self, question: str, topic: str) -> str:
