@@ -1,112 +1,198 @@
-from content_database import COMPUTING_CONTENT, TRAINING_DATA
+from transformers import T5ForConditionalGeneration, T5Tokenizer
+import torch
 import random
 
 class ContentProcessor:
     def __init__(self):
+        print("Initializing Content Processor with T5 model...")
+        self.tokenizer = T5Tokenizer.from_pretrained('t5-base')
+        self.model = T5ForConditionalGeneration.from_pretrained('t5-base')
+        self.content = {}
+        self.load_content()
+
+    def load_content(self):
+        """Load content from content_database.py"""
+        from content_database import COMPUTING_CONTENT
         self.content = COMPUTING_CONTENT
-        self.training_data = TRAINING_DATA
 
     def get_content(self, topic: str) -> str:
         """Get content for a specific topic"""
-        topic = topic.lower()
-        if topic in self.content:
-            # Split content into manageable sections
-            sections = [s.strip() for s in self.content[topic].split('\n')
-                       if len(s.strip()) > 50]  # Only sections with substantial content
-            return '\n'.join(sections)
-        return None
-
-    def get_training_data(self, topic: str) -> list:
-        """Get training data for topic"""
-        topic = topic.lower()
-        if topic in self.training_data:
-            return self.training_data[topic]
-        return []
+        return self.content.get(topic.lower(), None)
 
     def get_available_topics(self) -> list:
         """Get list of available topics"""
         return list(self.content.keys())
 
-    def get_section_by_difficulty(self, topic: str, difficulty: str) -> str:
-        """Get content section based on difficulty"""
-        content = self.get_content(topic)
-        if not content:
+    def generate_question_from_section(self, section: str) -> dict:
+        """Generate a question from a content section using T5"""
+        try:
+            # Generate question
+            question = self._generate_question(section)
+            if not question:
+                return None
+
+            # Generate correct answer (using a different prompt)
+            correct_answer = self._generate_answer(question, section)
+            if not correct_answer:
+                return None
+
+            # Generate wrong options
+            wrong_options = self._generate_wrong_options(section, correct_answer)
+
+            # Combine all options
+            options = [correct_answer] + wrong_options
+            random.shuffle(options)
+
+            return {
+                'question': question,
+                'options': options,
+                'correct_answer': correct_answer
+            }
+        except Exception as e:
+            print(f"Error in question generation: {e}")
             return None
 
-        sections = content.split('\n\n')  # Split by double newline to get major sections
+    def _generate_question(self, text: str) -> str:
+        """Generate a question using T5"""
+        try:
+            input_text = f"generate question: {text}"
+            input_ids = self.tokenizer.encode(
+                input_text,
+                return_tensors='pt',
+                max_length=512,
+                truncation=True
+            )
 
-        # Filter sections by approximate difficulty
-        if difficulty == 'easy':
-            # Get introductory sections
-            suitable_sections = [s for s in sections if len(s.split()) < 100]
-        elif difficulty == 'medium':
-            # Get middle sections
-            suitable_sections = [s for s in sections if 100 <= len(s.split()) <= 200]
-        else:  # hard
-            # Get more detailed sections
-            suitable_sections = [s for s in sections if len(s.split()) > 200]
+            outputs = self.model.generate(
+                input_ids,
+                max_length=64,
+                min_length=20,
+                num_beams=5,
+                no_repeat_ngram_size=2,
+                do_sample=True,
+                temperature=0.7,
+                top_p=0.95
+            )
 
-        return random.choice(suitable_sections) if suitable_sections else random.choice(sections)
-
-    def get_context_for_question(self, topic: str, question_type: str) -> str:
-        """Get relevant context for generating specific types of questions"""
-        content = self.get_content(topic)
-        if not content:
+            question = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            question = self._clean_question(question)
+            return question
+        except Exception as e:
+            print(f"Error generating question: {e}")
             return None
 
-        sections = [s.strip() for s in content.split('\n') if len(s.strip()) > 50]
+    def _generate_answer(self, question: str, context: str) -> str:
+        """Generate correct answer using T5"""
+        try:
+            input_text = f"answer: {question} context: {context}"
+            input_ids = self.tokenizer.encode(
+                input_text,
+                return_tensors='pt',
+                max_length=512,
+                truncation=True
+            )
 
-        # Select appropriate sections based on question type
-        if question_type == 'definition':
-            # Look for sections with 'is' or 'are'
-            suitable_sections = [s for s in sections if ' is ' in s.lower() or ' are ' in s.lower()]
-        elif question_type == 'comparison':
-            # Look for sections with comparing words
-            compare_words = ['versus', 'vs', 'compared to', 'while', 'whereas']
-            suitable_sections = [s for s in sections
-                               if any(word in s.lower() for word in compare_words)]
-        elif question_type == 'application':
-            # Look for sections with practical examples
-            practical_words = ['example', 'application', 'use case', 'practice']
-            suitable_sections = [s for s in sections
-                               if any(word in s.lower() for word in practical_words)]
-        else:
-            suitable_sections = sections
+            outputs = self.model.generate(
+                input_ids,
+                max_length=128,
+                min_length=20,
+                num_beams=4,
+                temperature=0.7,
+                top_p=0.9
+            )
 
-        return random.choice(suitable_sections) if suitable_sections else random.choice(sections)
+            answer = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+            return answer.strip()
+        except Exception as e:
+            print(f"Error generating answer: {e}")
+            return None
 
-    def extract_key_concepts(self, text: str) -> list:
-        """Extract key concepts from text for generating distractors"""
-        # Split text into sentences
-        sentences = [s.strip() for s in text.split('.') if len(s.strip()) > 20]
+    def _generate_wrong_options(self, context: str, correct_answer: str, num_options=3) -> list:
+        """Generate wrong options using T5"""
+        try:
+            wrong_options = []
+            input_prompts = [
+                f"generate incorrect but plausible answer: {context}",
+                f"generate different explanation: {context}",
+                f"generate alternative answer: {context}"
+            ]
 
-        # Extract key phrases (simplified version)
-        key_concepts = []
-        for sentence in sentences:
-            # Look for definitions or key points
-            if (' is ' in sentence or ' are ' in sentence or
-                ' refers to ' in sentence or ' means ' in sentence):
-                key_concepts.append(sentence)
+            for prompt in input_prompts:
+                input_ids = self.tokenizer.encode(
+                    prompt,
+                    return_tensors='pt',
+                    max_length=512,
+                    truncation=True
+                )
 
-        return key_concepts
+                outputs = self.model.generate(
+                    input_ids,
+                    max_length=64,
+                    min_length=10,
+                    num_beams=4,
+                    temperature=0.8,
+                    top_p=0.9,
+                    no_repeat_ngram_size=2
+                )
 
-    def get_related_concepts(self, topic: str, concept: str) -> list:
-        """Get related concepts for generating plausible wrong answers"""
+                wrong_option = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+                if wrong_option and wrong_option != correct_answer and wrong_option not in wrong_options:
+                    wrong_options.append(wrong_option.strip())
+
+            # If we didn't generate enough wrong options, add some generic ones
+            while len(wrong_options) < num_options:
+                fallback = f"Alternative explanation {len(wrong_options) + 1} for {context.split()[0]}"
+                if fallback not in wrong_options:
+                    wrong_options.append(fallback)
+
+            return wrong_options[:num_options]
+        except Exception as e:
+            print(f"Error generating wrong options: {e}")
+            return [f"Alternative explanation {i+1}" for i in range(num_options)]
+
+    def _clean_question(self, question: str) -> str:
+        """Clean up the generated question"""
+        question = question.strip()
+
+        # Remove common prefixes
+        prefixes = ['question:', 'q:', 'generate question:', 'ask:', 'answer:']
+        for prefix in prefixes:
+            if question.lower().startswith(prefix):
+                question = question[len(prefix):].strip()
+
+        # Ensure question ends with question mark
+        if not question.endswith('?'):
+            question += '?'
+
+        return question
+
+    def get_content_sections(self, topic: str) -> list:
+        """Split content into meaningful sections"""
         content = self.get_content(topic)
         if not content:
             return []
 
-        # Split into sentences and find related ones
-        sentences = [s.strip() for s in content.split('.') if len(s.strip()) > 20]
-        related = []
+        # Split content into sections
+        sections = []
+        current_section = []
 
-        # Simple similarity check (can be improved with NLP techniques)
-        concept_words = set(concept.lower().split())
-        for sentence in sentences:
-            sentence_words = set(sentence.lower().split())
-            # If there's some word overlap but not too much
-            common_words = concept_words.intersection(sentence_words)
-            if common_words and len(common_words) < len(concept_words):
-                related.append(sentence)
+        for line in content.split('\n'):
+            line = line.strip()
+            if line:
+                if line.endswith(':'):  # New section header
+                    if current_section:
+                        sections.append(' '.join(current_section))
+                    current_section = [line]
+                elif line.startswith('-'):  # List item
+                    if current_section:
+                        sections.append(' '.join(current_section))
+                    current_section = [line[1:].strip()]
+                else:
+                    current_section.append(line)
 
-        return related[:3]  # Return top 3 related concepts
+        # Add the last section
+        if current_section:
+            sections.append(' '.join(current_section))
+
+        # Filter out very short sections and clean them
+        return [s.strip() for s in sections if len(s.strip()) > 50]
