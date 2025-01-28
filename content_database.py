@@ -135,6 +135,130 @@ COMPUTING_CONTENT = {
                 print("Operation succeeded")
             finally:
                 cleanup_resources()
+
+            Python Programming Language:
+
+                    Core Language Features:
+                    Python stands out as a high-level programming language designed for readability and simplicity. Unlike low-level languages that require manual memory management, Python handles memory allocation automatically through garbage collection. The language's philosophy emphasizes code readability through significant whitespace, making it distinct from languages like C++ or Java that use braces for code blocks.
+
+                    Variables and Data Types:
+                    Python implements dynamic typing, which means variables can change types during runtime. For example:
+                    x = 5              # x is now an integer
+                    x = "Hello"        # x is now a string
+                    x = [1, 2, 3]      # x is now a list
+                    This flexibility contrasts with statically-typed languages where variables must declare their type explicitly.
+
+                    Basic Data Types Include:
+                    1. Numbers:
+                       - Integers (int): Whole numbers like 5, -17, 1000
+                       - Floating-point (float): Decimal numbers like 3.14, -0.001, 2.0
+                       - Complex numbers: For mathematical operations like 3+4j
+
+                    2. Strings (str):
+                       - Immutable sequences of characters
+                       - Support multiple operations:
+                         * Concatenation: "Hello" + " World" = "Hello World"
+                         * Slicing: "Python"[0:2] = "Py"
+                         * Methods: "hello".upper() = "HELLO"
+
+                    3. Collections:
+                       - Lists: Mutable sequences [1, 2, 3]
+                       - Tuples: Immutable sequences (1, 2, 3)
+                       - Dictionaries: Key-value pairs {"name": "John", "age": 30}
+                       - Sets: Unique unordered elements {1, 2, 3}
+
+                    Control Flow Structures:
+                    Python's control structures are designed for clarity and simplicity:
+
+                    1. Conditional Statements:
+                       if condition:
+                           # execute if true
+                       elif another_condition:
+                           # execute if first condition is false but this is true
+                       else:
+                           # execute if all conditions are false
+
+                    2. Loops:
+                       For Loop - Iterating over sequences:
+                       for item in sequence:
+                           # process item
+
+                       While Loop - Continue until condition is false:
+                       while condition:
+                           # execute while condition is true
+
+                       Loop Control:
+                       - break: Exit the loop completely
+                       - continue: Skip to next iteration
+                       - else: Execute when loop completes normally
+
+                    Functions and Parameters:
+                    Functions in Python are first-class objects, meaning they can be:
+                    - Assigned to variables
+                    - Passed as arguments
+                    - Returned from other functions
+
+                    Function Definition Types:
+                    1. Basic Function:
+                       def greet(name):
+                           return f"Hello, {name}!"
+
+                    2. Default Parameters:
+                       def greet(name, greeting="Hello"):
+                           return f"{greeting}, {name}!"
+
+                    3. Variable Arguments:
+                       def sum_all(*args):
+                           return sum(args)
+
+                    4. Keyword Arguments:
+                       def person_info(**kwargs):
+                           for key, value in kwargs.items():
+                               print(f"{key}: {value}")
+
+                    Advanced Function Features:
+                    - Lambda Functions: Anonymous single-expression functions
+                      square = lambda x: x**2
+
+                    - Decorators: Modify function behavior
+                      @timer
+                      def slow_function():
+                          time.sleep(1)
+
+                    Object-Oriented Programming:
+                    Python's OOP implementation includes:
+
+                    1. Class Definition:
+                       class BankAccount:
+                           def __init__(self, owner, balance=0):
+                               self.owner = owner
+                               self._balance = balance    # Protected attribute
+
+                           @property
+                           def balance(self):
+                               return self._balance
+
+                           def deposit(self, amount):
+                               if amount > 0:
+                                   self._balance += amount
+                                   return True
+                               return False
+
+                    2. Inheritance:
+                       class SavingsAccount(BankAccount):
+                           def __init__(self, owner, balance=0, interest_rate=0.01):
+                               super().__init__(owner, balance)
+                               self.interest_rate = interest_rate
+
+                           def apply_interest(self):
+                               interest = self._balance * self.interest_rate
+                               self.deposit(interest)
+
+                    Key OOP Concepts Demonstrated:
+                    - Encapsulation: Using protected attributes (_balance)
+                    - Inheritance: SavingsAccount extends BankAccount
+                    - Properties: Using @property decorator
+                    - Method Overriding: Customizing inherited behavior
         """,
     "data_structures": """
             Data Structures form the fundamental building blocks of computer science and software development. They provide organized ways to store and manage data efficiently, directly impacting program performance and resource utilization.
@@ -1154,7 +1278,215 @@ TRAINING_DATA = {
                     "Generators can only be used with numerical sequences.",
                     "Generators must be converted to lists before their values can be accessed."
                 ]
-            }
+            },
+
+            # Memory Management
+                    {
+                        "context": "Python handles memory allocation automatically through garbage collection, making it different from languages like C++ where memory must be managed manually",
+                        "question": "How does Python's memory management benefit developers?",
+                        "correct_answer": "It automatically handles memory allocation and deallocation, reducing the risk of memory leaks and making development more efficient",
+                        "wrong_answers": [
+                            "It requires developers to manually free memory for better performance",
+                            "It only works with small programs and must be disabled for large applications",
+                            "It prevents programs from using more than a fixed amount of memory"
+                        ]
+                    },
+
+                    # Code Structure
+                    {
+                        "context": "Python's philosophy emphasizes code readability through significant whitespace, making it distinct from languages like C++ or Java that use braces for code blocks",
+                        "question": "How does Python's use of whitespace affect code organization?",
+                        "correct_answer": "It enforces consistent indentation for code blocks, making code structure visible and improving readability",
+                        "wrong_answers": [
+                            "It allows random spacing and indentation without affecting execution",
+                            "It requires all code to be written on a single line",
+                            "It uses braces and semicolons like C++ and Java"
+                        ]
+                    },
+
+                    # Complex Data Type Operations
+                    {
+                        "context": "Python's dictionary is a key-value pair collection supporting operations like adding, removing, and updating values using keys",
+                        "question": "What makes dictionaries different from lists in Python?",
+                        "correct_answer": "Dictionaries use key-value pairs for data access instead of numeric indices, allowing for more meaningful data organization",
+                        "wrong_answers": [
+                            "Dictionaries can only store string values while lists can store any type",
+                            "Dictionaries automatically sort their contents while lists remain unordered",
+                            "Dictionaries are immutable while lists can be modified"
+                        ]
+                    },
+
+                    # Error Handling
+                    {
+                        "context": "Python uses try-except blocks for error handling, with optional else and finally clauses for additional control",
+                        "question": "When does the 'else' clause in a try-except block execute?",
+                        "correct_answer": "The else clause executes when no exception occurs in the try block",
+                        "wrong_answers": [
+                            "The else clause executes when an exception occurs",
+                            "The else clause always executes regardless of exceptions",
+                            "The else clause replaces the finally clause in modern Python"
+                        ]
+                    },
+
+                    # Decorators
+                    {
+                        "context": "Decorators in Python modify function behavior without changing the function code directly. @timer def slow_function(): time.sleep(1)",
+                        "question": "What is the main advantage of using decorators in Python?",
+                        "correct_answer": "They allow adding functionality to functions or classes without modifying their source code, promoting code reuse and separation of concerns",
+                        "wrong_answers": [
+                            "They make functions execute faster by optimizing the bytecode",
+                            "They are required for all function definitions in Python 3",
+                            "They convert functions into class methods automatically"
+                        ]
+                    },
+
+                    # Property Decorators
+                    {
+                        "context": "The @property decorator in Python allows class methods to be accessed like attributes while providing control over access",
+                        "question": "Why would you use the @property decorator in a class?",
+                        "correct_answer": "To create getter methods that can be accessed like attributes while maintaining control over value access and validation",
+                        "wrong_answers": [
+                            "To make all class attributes private and inaccessible",
+                            "To prevent inheritance from the class",
+                            "To convert instance methods into static methods"
+                        ]
+                    },
+
+                    # Method Overriding
+                    {
+                        "context": "In Python inheritance, subclasses can override methods from parent classes to modify behavior while maintaining the interface",
+                        "question": "What is the purpose of method overriding in Python inheritance?",
+                        "correct_answer": "To allow subclasses to provide specific implementation of methods defined in parent classes while maintaining the same interface",
+                        "wrong_answers": [
+                            "To prevent parent class methods from being used",
+                            "To create copies of parent class methods with different names",
+                            "To automatically combine parent and child class methods"
+                        ]
+                    },
+
+                    # Lambda Functions
+                    {
+                        "context": "Lambda functions create anonymous single-expression functions. Example: square = lambda x: x**2",
+                        "question": "In what situation would lambda functions be most appropriate?",
+                        "correct_answer": "When you need a simple function for a short period, particularly as an argument to higher-order functions",
+                        "wrong_answers": [
+                            "When creating complex class hierarchies",
+                            "When defining main program functions",
+                            "When handling file operations"
+                        ]
+                    },
+
+                    # Variable Scope
+                    {
+                        "context": "Python uses LEGB (Local, Enclosing, Global, Built-in) rule for variable scope resolution",
+                        "question": "How does Python's LEGB rule affect variable access?",
+                        "correct_answer": "Python searches for variables first in the local scope, then in any enclosing functions, then globally, and finally in built-ins",
+                        "wrong_answers": [
+                            "Variables are only accessible within the function they are defined in",
+                            "All variables are automatically global in Python",
+                            "Variable scope is determined by the module's name"
+                        ]
+                    },
+                    # Core Language Features
+                            {
+                                "context": "Python stands out as a high-level programming language designed for readability and simplicity. Unlike low-level languages that require manual memory management, Python handles memory allocation automatically through garbage collection.",
+                                "question": "What distinguishes Python from low-level programming languages in terms of memory management?",
+                                "correct_answer": "Python handles memory allocation automatically through garbage collection, while low-level languages require manual memory management",
+                                "wrong_answers": [
+                                    "Python requires explicit memory allocation while low-level languages handle it automatically",
+                                    "Python and low-level languages both require manual memory management",
+                                    "Python has no memory management system, unlike low-level languages"
+                                ]
+                            },
+                            # Dynamic Typing
+                            {
+                                "context": "Python implements dynamic typing, which means variables can change types during runtime. For example: x = 5 (integer), x = 'Hello' (string), x = [1, 2, 3] (list)",
+                                "question": "How does Python's dynamic typing work in practice?",
+                                "correct_answer": "Variables can change types freely during runtime without requiring explicit type declaration",
+                                "wrong_answers": [
+                                    "Variables must declare their type before being used",
+                                    "Variables can only change between numeric types",
+                                    "Type changes must be explicitly converted using type casting"
+                                ]
+                            },
+                            # Data Types
+                            {
+                                "context": "Python's basic data types include integers (whole numbers like 5, -17, 1000), floating-point (decimal numbers like 3.14, -0.001, 2.0), and complex numbers (like 3+4j)",
+                                "question": "Which statement correctly describes Python's numeric data types?",
+                                "correct_answer": "Python supports integers for whole numbers, floating-point for decimals, and complex numbers for mathematical operations",
+                                "wrong_answers": [
+                                    "Python only supports integers and must convert them to use decimals",
+                                    "All numbers in Python are stored as floating-point values",
+                                    "Complex numbers are not supported natively in Python"
+                                ]
+                            },
+                            # String Operations
+                            {
+                                "context": "Strings in Python are immutable sequences of characters that support multiple operations like concatenation ('Hello' + ' World'), slicing ('Python'[0:2]), and methods ('hello'.upper())",
+                                "question": "Which characteristic of Python strings is demonstrated by the operation: 'Python'[0:2]?",
+                                "correct_answer": "String slicing allows extracting a portion of the string using index ranges",
+                                "wrong_answers": [
+                                    "String concatenation combines two strings into one",
+                                    "String mutation changes individual characters in place",
+                                    "String conversion transforms the string into a number"
+                                ]
+                            },
+                            # Collections
+                            {
+                                "context": "Python collections include lists (mutable sequences [1, 2, 3]), tuples (immutable sequences (1, 2, 3)), dictionaries (key-value pairs {'name': 'John'}), and sets (unique unordered elements {1, 2, 3})",
+                                "question": "What is the key difference between lists and tuples in Python?",
+                                "correct_answer": "Lists are mutable sequences that can be modified after creation, while tuples are immutable sequences that cannot be changed",
+                                "wrong_answers": [
+                                    "Lists can only contain numbers while tuples can contain any data type",
+                                    "Tuples are faster to access but take more memory than lists",
+                                    "Lists are ordered while tuples have no specific order"
+                                ]
+                            },
+                            # Control Flow
+                            {
+                                "context": "Python's control structures include if-elif-else conditionals and loops with break, continue, and else clauses",
+                                "question": "How does the 'continue' statement affect loop execution in Python?",
+                                "correct_answer": "It skips the remaining code in the current iteration and moves to the next iteration of the loop",
+                                "wrong_answers": [
+                                    "It immediately terminates the loop completely",
+                                    "It returns to the beginning of the loop and restarts the count",
+                                    "It pauses the loop until a condition changes"
+                                ]
+                            },
+                            # Functions
+                            {
+                                "context": "Functions in Python are first-class objects, meaning they can be assigned to variables, passed as arguments, and returned from other functions",
+                                "question": "What does it mean for Python functions to be 'first-class objects'?",
+                                "correct_answer": "Functions can be assigned to variables, passed as arguments, and returned from other functions like any other object",
+                                "wrong_answers": [
+                                    "Functions must be defined before any other code in the program",
+                                    "Functions can only be called once during program execution",
+                                    "Functions are automatically optimized by the Python interpreter"
+                                ]
+                            },
+                            # OOP
+                            {
+                                "context": "Python's OOP implementation includes classes with initialization methods, properties, inheritance, and method overriding",
+                                "question": "What is the purpose of the @property decorator in Python classes?",
+                                "correct_answer": "It allows class methods to be accessed like attributes while providing additional control over getting and setting values",
+                                "wrong_answers": [
+                                    "It makes all class attributes private and inaccessible",
+                                    "It automatically converts class methods to static methods",
+                                    "It prevents the class from being inherited by other classes"
+                                ]
+                            },
+                            # Advanced Functions
+                            {
+                                "context": "Lambda functions in Python are anonymous single-expression functions. Example: square = lambda x: x**2",
+                                "question": "What is the primary purpose of lambda functions in Python?",
+                                "correct_answer": "To create small, anonymous functions for simple operations that can be defined inline",
+                                "wrong_answers": [
+                                    "To make all functions run faster than regular function definitions",
+                                    "To create functions that only work with numerical calculations",
+                                    "To replace all traditional function definitions in Python"
+                                ]
+                            }
+
         ],
     "data_structures": [
         {

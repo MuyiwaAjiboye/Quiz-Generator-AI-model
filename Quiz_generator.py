@@ -1,5 +1,6 @@
 from utils.content_processor import ContentProcessor
 from utils.result_handler import ResultHandler
+import random
 
 class QuizGenerator:
     def __init__(self):
