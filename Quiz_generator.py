@@ -1,6 +1,5 @@
 from utils.content_processor import ContentProcessor
 from utils.result_handler import ResultHandler
-import random
 
 class QuizGenerator:
     def __init__(self):
@@ -23,7 +22,7 @@ class QuizGenerator:
                 section = random.choice(sections)
                 sections.remove(section)  # Avoid duplicate questions
 
-                question_dict = self.content_processor.generate_question_from_section(section)
+                question_dict = self.content_processor.create_question(section)
                 if question_dict:
                     questions.append(question_dict)
 
@@ -49,7 +48,7 @@ class QuizGenerator:
                 if num_questions <= 0:
                     raise ValueError("Number of questions must be positive")
 
-                print("\nGenerating quiz using T5 model...")
+                print("\nGenerating quiz...")
                 quiz = self.generate_quiz(topic, num_questions)
 
                 if quiz:

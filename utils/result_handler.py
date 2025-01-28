@@ -20,15 +20,12 @@ class ResultHandler:
 
         print("\n=== Quiz Questions ===")
         for i, q in enumerate(quiz, 1):
-            # Display question with formatting
             print(f"\nQuestion {i}:")
             print("=" * 40)
             print(self._format_text(q['question']))
             print("-" * 40)
 
-            # Display options with letter choices
             for j, option in enumerate(q['options']):
-                # Format long options for better readability
                 option_text = self._format_text(option)
                 print(f"{chr(65+j)}. {option_text}")
 
@@ -41,16 +38,12 @@ class ResultHandler:
             return
 
         print("\n=== Quiz Answers ===")
-        score = 0
-        total = len(quiz)
-
         for i, q in enumerate(quiz, 1):
             print(f"\nQuestion {i}:")
             print("=" * 40)
             print(self._format_text(q['question']))
             print("-" * 40)
 
-            # Display all options, highlighting the correct one
             for j, option in enumerate(q['options']):
                 option_text = self._format_text(option)
                 is_correct = option == q['correct_answer']
@@ -59,7 +52,6 @@ class ResultHandler:
 
             print("-" * 40)
 
-        # Save quiz results
         self._save_quiz_result(quiz)
 
     def _format_text(self, text: str, max_length: int = 80) -> str:
@@ -73,19 +65,18 @@ class ResultHandler:
         current_length = 0
 
         for word in words:
-            word_length = len(word) + 1  # +1 for space
-            if current_length + word_length <= max_length:
+            if current_length + len(word) + 1 <= max_length:
                 current_line.append(word)
-                current_length += word_length
+                current_length += len(word) + 1
             else:
                 lines.append(' '.join(current_line))
                 current_line = [word]
-                current_length = word_length
+                current_length = len(word)
 
         if current_line:
             lines.append(' '.join(current_line))
 
-        return '\n   '.join(lines)  # Indent continued lines
+        return '\n   '.join(lines)
 
     def _save_quiz_result(self, quiz: list):
         """Save quiz results to file"""
@@ -111,64 +102,3 @@ class ResultHandler:
             print(f"\nQuiz results saved to: {filename}")
         except Exception as e:
             print(f"\nError saving quiz results: {e}")
-
-    def take_quiz(self, quiz: list):
-        """Interactive quiz taking with immediate feedback"""
-        if not quiz:
-            print("No questions available.")
-            return
-
-        user_answers = []
-        score = 0
-        total_questions = len(quiz)
-
-        print("\n=== Quiz Started ===")
-        start_time = datetime.now()
-
-        for i, q in enumerate(quiz, 1):
-            print(f"\nQuestion {i} of {total_questions}:")
-            print("=" * 40)
-            print(self._format_text(q['question']))
-            print("-" * 40)
-
-            # Display options
-            for j, option in enumerate(q['options']):
-                print(f"{chr(65+j)}. {self._format_text(option)}")
-
-            # Get user answer
-            while True:
-                answer = input("\nYour answer (A/B/C/D): ").upper()
-                if answer in ['A', 'B', 'C', 'D']:
-                    user_answers.append(answer)
-
-                    # Convert letter answer to option
-                    answer_index = ord(answer) - ord('A')
-                    selected_answer = q['options'][answer_index]
-
-                    # Check if correct
-                    is_correct = selected_answer == q['correct_answer']
-                    if is_correct:
-                        score += 1
-                        print("✓ Correct!")
-                    else:
-                        correct_index = q['options'].index(q['correct_answer'])
-                        print(f"✗ Incorrect. The correct answer was: {chr(65+correct_index)}")
-
-                    break
-                else:
-                    print("Please enter A, B, C, or D")
-
-        # Calculate and display results
-        end_time = datetime.now()
-        duration = (end_time - start_time).seconds
-        percentage = (score / total_questions) * 100
-
-        print("\n=== Quiz Results ===")
-        print(f"Score: {score}/{total_questions}")
-        print(f"Percentage: {percentage:.1f}%")
-        print(f"Time taken: {duration} seconds")
-
-        # Save results
-        self._save_quiz_result(quiz)
-
-        return user_answers
