@@ -19,21 +19,21 @@ class QuizGenerator:
         """Generate a quiz with specified number of questions"""
         questions = []
 
-        # More specific prompts for computing questions
-        prompts = [
-            f"Generate a multiple choice question testing knowledge of {topic}",
-            f"Create a quiz question to test understanding of {topic}",
-            f"Write a question that tests {topic} concepts",
-            f"Form a question to evaluate {topic} knowledge"
-        ]
+        # Simplified, direct prompts
+        template = {
+            'easy': f"Create a basic question about {topic} that tests fundamental knowledge.",
+            'medium': f"Create an intermediate question about {topic} that tests understanding.",
+            'hard': f"Create an advanced question about {topic} that tests deep knowledge."
+        }
 
         for _ in range(num_questions):
             prompt = f"""
-            Task: {random.choice(prompts)}
-            Difficulty: {difficulty}
-            Format: Generate only the question without any prefixes or instructions.
-            Example output format:
-            What is the primary purpose of a constructor in object-oriented programming?
+            {template[difficulty]}
+            Requirements:
+            - Clear, single-sentence question
+            - Must end with a question mark
+            - Focus on specific concepts
+            - No instructions or prefixes
             """
 
             try:
@@ -45,27 +45,21 @@ class QuizGenerator:
                     do_sample=True,
                     temperature=0.8,
                     top_p=0.9,
-                    num_return_sequences=1,
-                    no_repeat_ngram_size=2
+                    num_return_sequences=1
                 )
 
                 generated_question = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-                # Clean up the generated question
-                generated_question = generated_question.replace("Question:", "").strip()
-                generated_question = generated_question.split("\n")[0]  # Take only first line
+                # Clean up the question
+                clean_question = self._clean_generated_text(generated_question)
 
-                # Create full question with options
-                question = self.question_handler.create_question(
-                    generated_question,
-                    topic,
-                    difficulty
-                )
-
-                if not any(q['question'] == question['question'] for q in questions):
+                if clean_question:
+                    question = self.question_handler.create_question(
+                        clean_question,
+                        topic,
+                        difficulty
+                    )
                     questions.append(question)
-                else:
-                    continue
 
             except Exception as e:
                 print(f"Error generating question: {e}")
@@ -81,6 +75,27 @@ class QuizGenerator:
         self.current_quiz = quiz
         self.history.add_quiz(quiz)
         return quiz
+
+    def _clean_generated_text(self, text: str) -> str:
+        """Clean up generated text to create a proper question"""
+        # Remove multiple spaces and newlines
+        text = ' '.join(text.split())
+
+        # Remove any prefixes like "Question:", "Q:", etc.
+        prefixes_to_remove = ["question:", "q:", "task:", "generate"]
+        for prefix in prefixes_to_remove:
+            if text.lower().startswith(prefix):
+                text = text[len(prefix):].strip()
+
+        # Ensure it ends with a question mark
+        if not text.endswith('?'):
+            text += '?'
+
+        # Remove any remaining instruction-like text
+        if 'generate' in text.lower() or 'create' in text.lower():
+            return ""
+
+        return text
 
 def main():
     quiz_gen = QuizGenerator()
