@@ -41,17 +41,16 @@ class QuestionHandler:
     def _generate_options_from_text(self, question: str, topic: str, difficulty: str) -> List[str]:
         """Generate relevant options for the question"""
         try:
-            # Create a more specific prompt for generating options
             option_prompt = f"""
-            Question: {question}
-            Task: Generate 4 distinct answer options for this {difficulty} level question about {topic}.
-            Requirements:
-            - First option must be the correct answer
-            - Other options must be plausible but incorrect
-            - Each option must be unique and related to {topic}
+            For the question: {question}
+            Generate four answer choices where only one is correct.
+            Format:
+            Correct: [The correct answer]
+            Wrong1: [A plausible but incorrect answer]
+            Wrong2: [Another plausible but incorrect answer]
+            Wrong3: [Another plausible but incorrect answer]
             """
 
-            # Generate options
             inputs = self.tokenizer.encode(option_prompt, return_tensors="pt", max_length=512, truncation=True)
             outputs = self.model.generate(
                 inputs,
@@ -65,23 +64,38 @@ class QuestionHandler:
 
             generated_options = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-            # Process and clean options
+            # Extract options, looking for the format we specified
             options = []
             for line in generated_options.split('\n'):
                 line = line.strip()
-                # Remove any numbering or bullet points
-                line = line.lstrip('1234567890.-)*> ')
-                if line and len(line) > 5 and line not in options:
-                    options.append(line)
+                if line.startswith(('Correct:', 'Wrong1:', 'Wrong2:', 'Wrong3:')):
+                    option = line.split(':', 1)[1].strip()
+                    if option and len(option) > 1:
+                        options.append(option)
 
-            # If we got enough unique options, use them
             if len(options) >= 4:
                 return options[:4]
 
-            # If we need more options, generate additional ones
-            while len(options) < 4:
-                additional_prompt = f"Generate another plausible but incorrect answer for: {question}"
-                inputs = self.tokenizer.encode(additional_prompt, return_tensors="pt")
+            # If we don't get proper options, generate them one by one
+            return self._generate_fallback_options(question, topic)
+
+        except Exception as e:
+            print(f"Error generating options: {e}")
+            return self._generate_fallback_options(question, topic)
+
+    def _generate_fallback_options(self, question: str, topic: str) -> List[str]:
+        """Generate options one by one if the batch generation fails"""
+        options = []
+        prompts = [
+            f"What is the correct answer to: {question}",
+            f"Generate an incorrect but plausible answer to: {question}",
+            f"Generate another incorrect but plausible answer to: {question}",
+            f"Generate one more incorrect but plausible answer to: {question}"
+        ]
+
+        for prompt in prompts:
+            try:
+                inputs = self.tokenizer.encode(prompt, return_tensors="pt")
                 outputs = self.model.generate(
                     inputs,
                     max_length=50,
@@ -89,18 +103,10 @@ class QuestionHandler:
                     do_sample=True,
                     temperature=0.8
                 )
-                new_option = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-                if new_option not in options:
-                    options.append(new_option)
+                option = self.tokenizer.decode(outputs[0], skip_special_tokens=True).strip()
+                if option and option not in options:
+                    options.append(option)
+            except:
+                options.append(f"Option {len(options) + 1} for {topic}")
 
-            return options
-
-        except Exception as e:
-            print(f"Error generating options: {e}")
-            # Generate generic but topic-relevant options as last resort
-            return [
-                f"The most appropriate answer for this {topic} question",
-                f"A related but incorrect approach in {topic}",
-                f"Another possible but incorrect solution in {topic}",
-                f"A common misconception about this aspect of {topic}"
-            ]
+        return options[:4]

@@ -19,38 +19,41 @@ class QuizGenerator:
         """Generate a quiz with specified number of questions"""
         questions = []
 
-        # Different question types for variety
-        question_types = [
-            "what is",
-            "how does",
-            "explain",
-            "compare",
-            "describe",
-            "define",
-            "analyze"
+        # More specific prompts for computing questions
+        prompts = [
+            f"Generate a multiple choice question testing knowledge of {topic}",
+            f"Create a quiz question to test understanding of {topic}",
+            f"Write a question that tests {topic} concepts",
+            f"Form a question to evaluate {topic} knowledge"
         ]
 
         for _ in range(num_questions):
-            # Randomly select question type for variety
-            question_type = random.choice(question_types)
-
-            prompt = f"{question_type} {topic} in computing context with {difficulty} difficulty"
+            prompt = f"""
+            Task: {random.choice(prompts)}
+            Difficulty: {difficulty}
+            Format: Generate only the question without any prefixes or instructions.
+            Example output format:
+            What is the primary purpose of a constructor in object-oriented programming?
+            """
 
             try:
-                # Encode and generate question
                 inputs = self.tokenizer.encode(prompt, return_tensors="pt", max_length=512, truncation=True)
                 outputs = self.model.generate(
                     inputs,
-                    max_length=150,
-                    min_length=30,
+                    max_length=100,
+                    min_length=20,
                     do_sample=True,
-                    temperature=0.7,
+                    temperature=0.8,
                     top_p=0.9,
                     num_return_sequences=1,
-                    no_repeat_ngram_size=2  # Prevent repetition in generated text
+                    no_repeat_ngram_size=2
                 )
 
                 generated_question = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+                # Clean up the generated question
+                generated_question = generated_question.replace("Question:", "").strip()
+                generated_question = generated_question.split("\n")[0]  # Take only first line
 
                 # Create full question with options
                 question = self.question_handler.create_question(
@@ -59,11 +62,9 @@ class QuizGenerator:
                     difficulty
                 )
 
-                # Add to questions if it's unique
                 if not any(q['question'] == question['question'] for q in questions):
                     questions.append(question)
                 else:
-                    # If duplicate, try again with different type
                     continue
 
             except Exception as e:
