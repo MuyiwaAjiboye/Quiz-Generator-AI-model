@@ -1,12 +1,8 @@
-from transformers import T5ForConditionalGeneration, T5Tokenizer
-import torch
 import random
 
 class ContentProcessor:
     def __init__(self):
-        print("Initializing Content Processor with T5 model...")
-        self.tokenizer = T5Tokenizer.from_pretrained('t5-base')
-        self.model = T5ForConditionalGeneration.from_pretrained('t5-base')
+        print("Initializing Content Processor...")
         self.content = {}
         self.load_content()
 
@@ -24,20 +20,12 @@ class ContentProcessor:
         return list(self.content.keys())
 
     def generate_question_from_section(self, section: str) -> dict:
-        """Generate a question from a content section using T5"""
+        """Generate a question from a content section"""
         try:
-            # Generate question
-            question = self._generate_question(section)
-            if not question:
-                return None
-
-            # Generate correct answer (using a different prompt)
-            correct_answer = self._generate_answer(question, section)
-            if not correct_answer:
-                return None
-
-            # Generate wrong options
-            wrong_options = self._generate_wrong_options(section, correct_answer)
+            # Create question from section
+            question = self._create_question(section)
+            correct_answer = section
+            wrong_options = self._generate_wrong_options(section)
 
             # Combine all options
             options = [correct_answer] + wrong_options
@@ -52,122 +40,33 @@ class ContentProcessor:
             print(f"Error in question generation: {e}")
             return None
 
-    def _generate_question(self, text: str) -> str:
-        """Generate a question using T5"""
-        try:
-            input_text = f"generate question: {text}"
-            input_ids = self.tokenizer.encode(
-                input_text,
-                return_tensors='pt',
-                max_length=512,
-                truncation=True
-            )
+    def _create_question(self, section: str) -> str:
+        """Create a question based on the content"""
+        # Get the main concept (first few words)
+        main_concept = ' '.join(section.split()[:3])
 
-            outputs = self.model.generate(
-                input_ids,
-                max_length=64,
-                min_length=20,
-                 do_sample=True,
-                num_beams=5,
-                no_repeat_ngram_size=2,
+        # Question templates
+        templates = [
+            f"Which of the following best describes {main_concept}?",
+            f"What is the correct explanation of {main_concept}?",
+            f"Which statement accurately describes {main_concept}?",
+            f"What is the proper definition of {main_concept}?"
+        ]
 
-                temperature=0.7,
-                top_p=0.95
-            )
+        return random.choice(templates)
 
-            question = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            question = self._clean_question(question)
-            return question
-        except Exception as e:
-            print(f"Error generating question: {e}")
-            return None
+    def _generate_wrong_options(self, correct_answer: str) -> list:
+        """Generate plausible but incorrect options"""
+        # Get the main concept
+        main_concept = ' '.join(correct_answer.split()[:3])
 
-    def _generate_answer(self, question: str, context: str) -> str:
-        """Generate correct answer using T5"""
-        try:
-            input_text = f"answer: {question} context: {context}"
-            input_ids = self.tokenizer.encode(
-                input_text,
-                return_tensors='pt',
-                max_length=512,
-                truncation=True
-            )
+        wrong_options = [
+            f"{main_concept} is a tool used primarily for system optimization and debugging.",
+            f"{main_concept} is an advanced feature used only in enterprise-level applications.",
+            f"{main_concept} is a deprecated concept that has been replaced by newer alternatives."
+        ]
 
-            outputs = self.model.generate(
-                input_ids,
-                max_length=128,
-                min_length=20,
-                do_sample=True,
-                num_beams=4,
-                temperature=0.7,
-                top_p=0.9
-            )
-
-            answer = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-            return answer.strip()
-        except Exception as e:
-            print(f"Error generating answer: {e}")
-            return None
-
-    def _generate_wrong_options(self, context: str, correct_answer: str, num_options=3) -> list:
-        """Generate wrong options using T5"""
-        try:
-            wrong_options = []
-            input_prompts = [
-                f"generate incorrect but plausible answer: {context}",
-                f"generate different explanation: {context}",
-                f"generate alternative answer: {context}"
-            ]
-
-            for prompt in input_prompts:
-                input_ids = self.tokenizer.encode(
-                    prompt,
-                    return_tensors='pt',
-                    max_length=512,
-                    truncation=True
-                )
-
-                outputs = self.model.generate(
-                    input_ids,
-                    max_length=64,
-                    min_length=10,
-                    do_sample=True,
-                    num_beams=4,
-                    temperature=0.8,
-                    top_p=0.9,
-                    no_repeat_ngram_size=2
-                )
-
-                wrong_option = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
-                if wrong_option and wrong_option != correct_answer and wrong_option not in wrong_options:
-                    wrong_options.append(wrong_option.strip())
-
-            # If we didn't generate enough wrong options, add some generic ones
-            while len(wrong_options) < num_options:
-                fallback = f"Alternative explanation {len(wrong_options) + 1} for {context.split()[0]}"
-                if fallback not in wrong_options:
-                    wrong_options.append(fallback)
-
-            return wrong_options[:num_options]
-        except Exception as e:
-            print(f"Error generating wrong options: {e}")
-            return [f"Alternative explanation {i+1}" for i in range(num_options)]
-
-    def _clean_question(self, question: str) -> str:
-        """Clean up the generated question"""
-        question = question.strip()
-
-        # Remove common prefixes
-        prefixes = ['question:', 'q:', 'generate question:', 'ask:', 'answer:']
-        for prefix in prefixes:
-            if question.lower().startswith(prefix):
-                question = question[len(prefix):].strip()
-
-        # Ensure question ends with question mark
-        if not question.endswith('?'):
-            question += '?'
-
-        return question
+        return wrong_options
 
     def get_content_sections(self, topic: str) -> list:
         """Split content into meaningful sections"""
