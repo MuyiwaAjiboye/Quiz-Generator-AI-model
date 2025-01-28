@@ -1,6 +1,6 @@
 from typing import List, Dict
 import random
-from transformers import T5ForConditionalGeneration, T5Tokenizer
+from transformers import pipeline
 
 class QuestionHandler:
     def __init__(self):
