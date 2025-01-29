@@ -1,10 +1,10 @@
+import streamlit as st
 from utils.content_processor import ContentProcessor
 from utils.result_handler import ResultHandler
 import random
 
 class QuizGenerator:
     def __init__(self):
-        print("Initializing Quiz Generator...")
         self.content_processor = ContentProcessor()
         self.result_handler = ResultHandler()
         self.current_quiz = None
@@ -14,8 +14,7 @@ class QuizGenerator:
         sections = self.content_processor.get_content_sections(topic)
 
         if not sections:
-            print(f"Topic not found. Available topics: {', '.join(self.content_processor.get_available_topics())}")
-            return None
+            return None, f"Topic not found. Available topics: {', '.join(self.content_processor.get_available_topics())}"
 
         questions = []
         try:
@@ -28,59 +27,38 @@ class QuizGenerator:
                     questions.append(question_dict)
 
             self.current_quiz = questions
-            return questions
+            return questions, None
 
         except Exception as e:
-            print(f"Error generating quiz: {e}")
-            return None
+            return None, f"Error generating quiz: {e}"
 
-    def run_quiz(self):
-        """Run the quiz application"""
-        while True:
-            print("\n=== Quiz Generator ===")
-            print("Available topics:", ", ".join(self.content_processor.get_available_topics()))
-
-            topic = input("\nEnter topic (or 'exit' to quit): ").lower()
-            if topic == 'exit':
-                break
-
-            try:
-                num_questions = int(input("How many questions would you like? "))
-                if num_questions <= 0:
-                    raise ValueError("Number of questions must be positive")
-
-                print("\nGenerating quiz...")
-                quiz = self.generate_quiz(topic, num_questions)
-
-                if quiz:
-                    self.result_handler.display_quiz(quiz)
-
-                    while True:
-                        show_answers = input("\nWould you like to see the answers? (yes/no): ").lower()
-                        if show_answers in ['yes', 'no']:
-                            break
-                        print("Please enter 'yes' or 'no'")
-
-                    if show_answers == 'yes':
-                        self.result_handler.show_answers(quiz)
-
-            except ValueError as e:
-                print(f"Error: {e}")
-                print("Please enter a valid number of questions.")
-            except Exception as e:
-                print(f"An unexpected error occurred: {e}")
-                print("Please try again.")
-
+# Streamlit UI
 def main():
-    try:
-        quiz_gen = QuizGenerator()
-        quiz_gen.run_quiz()
-    except KeyboardInterrupt:
-        print("\nQuiz Generator terminated by user.")
-    except Exception as e:
-        print(f"\nAn error occurred: {e}")
-    finally:
-        print("\nThank you for using Quiz Generator!")
+    st.title("Quiz Generator")
+    st.write("Generate quizzes from available topics with ease.")
+
+    # Instantiate QuizGenerator
+    quiz_gen = QuizGenerator()
+
+    # Sidebar for topic selection
+    st.sidebar.header("Quiz Options")
+    available_topics = quiz_gen.content_processor.get_available_topics()
+    topic = st.sidebar.selectbox("Select a topic", options=available_topics)
+    num_questions = st.sidebar.number_input("Number of questions", min_value=1, step=1, value=5)
+
+    # Generate Quiz Button
+    if st.sidebar.button("Generate Quiz"):
+        st.write(f"### Generating quiz for topic: {topic}")
+        quiz, error = quiz_gen.generate_quiz(topic, num_questions)
+
+        if error:
+            st.error(error)
+        else:
+            for i, q in enumerate(quiz, start=1):
+                st.write(f"**Q{i}:** {q['question']}")
+                st.write(f"_Options:_ {', '.join(q['options'])}")
+                if st.button(f"Show Answer for Q{i}", key=f"answer_{i}"):
+                    st.write(f"**Answer:** {q['answer']}")
 
 if __name__ == "__main__":
     main()
