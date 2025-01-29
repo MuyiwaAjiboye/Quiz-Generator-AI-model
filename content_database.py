@@ -1485,7 +1485,105 @@ TRAINING_DATA = {
                                     "To create functions that only work with numerical calculations",
                                     "To replace all traditional function definitions in Python"
                                 ]
-                            }
+                            },
+                            {
+                                        "context": "Python stands out as a high-level programming language designed for readability and simplicity. Unlike low-level languages that require manual memory management, Python handles memory allocation automatically through garbage collection.",
+                                        "question": "How does Python's memory management differ from low-level programming languages?",
+                                        "correct_answer": "Python handles memory allocation automatically through garbage collection, while low-level languages require manual memory management.",
+                                        "wrong_answers": [
+                                            "Python requires manual memory allocation while low-level languages handle it automatically",
+                                            "Python and low-level languages both require manual memory management",
+                                            "Python does not support memory management features"
+                                        ]
+                                    },
+                                    {
+                                        "context": "The language's philosophy emphasizes code readability through significant whitespace, making it distinct from languages like C++ or Java that use braces for code blocks.",
+                                        "question": "What distinguishes Python's code block structure from languages like C++ and Java?",
+                                        "correct_answer": "Python uses significant whitespace for code blocks, while C++ and Java use braces",
+                                        "wrong_answers": [
+                                            "Python uses braces while C++ and Java use whitespace",
+                                            "Python, C++, and Java all use the same code block structure",
+                                            "Python requires both braces and whitespace for code blocks"
+                                        ]
+                                    },
+
+                                    # Variables and Data Types
+                                    {
+                                        "context": "Python implements dynamic typing, which means variables can change types during runtime. For example: x = 5 # x is now an integer, x = 'Hello' # x is now a string",
+                                        "question": "What demonstrates Python's dynamic typing capability?",
+                                        "correct_answer": "A variable can change from storing an integer to storing a string during runtime without explicit type declaration",
+                                        "wrong_answers": [
+                                            "Variables must declare their type before being used",
+                                            "Variables can only store one type of data throughout the program",
+                                            "Dynamic typing only works with numerical data types"
+                                        ]
+                                    },
+                                    {
+                                        "context": "Strings are immutable sequences of characters that support multiple operations like concatenation, slicing, and methods such as upper().",
+                                        "question": "Which statement correctly describes Python string characteristics?",
+                                        "correct_answer": "Strings are immutable and support operations like concatenation, slicing, and built-in methods",
+                                        "wrong_answers": [
+                                            "Strings can be modified after creation and don't support methods",
+                                            "Strings are mutable but don't support concatenation",
+                                            "Strings only support basic character storage without additional operations"
+                                        ]
+                                    },
+
+                                    # Control Flow
+                                    {
+                                        "context": "Python's control structures include conditional statements (if-elif-else) and loops (for and while) with break, continue, and else clauses.",
+                                        "question": "What is unique about Python's loop structures?",
+                                        "correct_answer": "Python loops can have an else clause that executes when the loop completes normally, and support break and continue statements",
+                                        "wrong_answers": [
+                                            "Python loops can only use break statements",
+                                            "Python loops don't support any control statements",
+                                            "Python loops must always have an else clause"
+                                        ]
+                                    },
+
+                                    # Functions
+                                    {
+                                        "context": "Functions in Python are first-class objects, meaning they can be assigned to variables, passed as arguments, and returned from other functions.",
+                                        "question": "What makes Python functions 'first-class objects'?",
+                                        "correct_answer": "They can be assigned to variables, passed as arguments, and returned from other functions",
+                                        "wrong_answers": [
+                                            "They can only be defined at the module level",
+                                            "They must be declared with explicit return types",
+                                            "They cannot accept arguments or return values"
+                                        ]
+                                    },
+                                    {
+                                        "context": "Python functions support various parameter types including default parameters, variable arguments (*args), and keyword arguments (**kwargs).",
+                                        "question": "What is the purpose of **kwargs in Python function definitions?",
+                                        "correct_answer": "It allows a function to accept any number of keyword arguments as a dictionary",
+                                        "wrong_answers": [
+                                            "It only accepts positional arguments",
+                                            "It restricts the function to a single argument",
+                                            "It prevents the function from accepting any arguments"
+                                        ]
+                                    },
+
+                                    # Object-Oriented Programming
+                                    {
+                                        "context": "Python's OOP implementation includes classes with features like inheritance, encapsulation, and properties. Protected attributes are denoted with a single underscore.",
+                                        "question": "How is encapsulation implemented in Python classes?",
+                                        "correct_answer": "Through protected attributes (denoted with underscore) and properties that control access to class attributes",
+                                        "wrong_answers": [
+                                            "Through public attributes only",
+                                            "By making all attributes private by default",
+                                            "By preventing any access to class attributes"
+                                        ]
+                                    },
+                                    {
+                                        "context": "Class inheritance in Python allows a class to inherit attributes and methods from another class, with the ability to override methods and use super() to access parent class methods.",
+                                        "question": "What is the purpose of the super() function in Python inheritance?",
+                                        "correct_answer": "It allows a child class to call methods from its parent class",
+                                        "wrong_answers": [
+                                            "It prevents inheritance from occurring",
+                                            "It only works with multiple inheritance",
+                                            "It removes all parent class attributes"
+                                        ]
+                                    }
 
         ],
     "data_structures": [
