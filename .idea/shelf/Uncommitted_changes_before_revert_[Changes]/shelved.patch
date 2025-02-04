@@ -1,0 +1,314 @@
+Index: Quiz_generator.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>import streamlit as st\r\nfrom utils.content_processor import ContentProcessor\r\nfrom utils.result_handler import ResultHandler\r\nimport random\r\n\r\nclass QuizGenerator:\r\n    def __init__(self):\r\n        self.content_processor = ContentProcessor()\r\n        self.result_handler = ResultHandler()\r\n        self.current_quiz = None\r\n\r\n    def generate_quiz(self, topic: str, num_questions: int):\r\n        \"\"\"Generate a quiz for the given topic\"\"\"\r\n        sections = self.content_processor.get_content_sections(topic)\r\n\r\n        if not sections:\r\n            return None, f\"Topic not found. Available topics: {', '.join(self.content_processor.get_available_topics())}\"\r\n\r\n        questions = []\r\n        try:\r\n            for _ in range(min(num_questions, len(sections))):\r\n                section = random.choice(sections)\r\n                sections.remove(section)  # Avoid duplicate questions\r\n\r\n                question_dict = self.content_processor.create_question(section)\r\n                if question_dict:\r\n                    questions.append(question_dict)\r\n\r\n            self.current_quiz = questions\r\n            return questions, None\r\n\r\n        except Exception as e:\r\n            return None, f\"Error generating quiz: {e}\"\r\n\r\n# Streamlit UI\r\ndef main():\r\n    st.title(\"Quiz Generator\")\r\n    st.write(\"Generate quizzes from available topics with ease.\")\r\n\r\n    # Instantiate QuizGenerator\r\n    quiz_gen = QuizGenerator()\r\n\r\n    # Sidebar for topic selection\r\n    st.sidebar.header(\"Quiz Options\")\r\n    available_topics = quiz_gen.content_processor.get_available_topics()\r\n    topic = st.sidebar.selectbox(\"Select a topic\", options=available_topics)\r\n    num_questions = st.sidebar.number_input(\"Number of questions\", min_value=1, step=1, value=5)\r\n\r\n    # Generate Quiz Button\r\n    if st.sidebar.button(\"Generate Quiz\"):\r\n        st.write(f\"### Generating quiz for topic: {topic}\")\r\n        quiz, error = quiz_gen.generate_quiz(topic, num_questions)\r\n\r\n        if error:\r\n            st.error(error)\r\n        else:\r\n            for i, q in enumerate(quiz, start=1):\r\n                st.write(f\"**Q{i}:** {q['question']}\")\r\n                st.write(f\"_Options:_ {', '.join(q['options'])}\")\r\n                if st.button(f\"Show Answer for Q{i}\", key=f\"answer_{i}\"):\r\n                    st.write(f\"**Answer:** {q['answer']}\")\r\n\r\nif __name__ == \"__main__\":\r\n    main()
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Quiz_generator.py b/Quiz_generator.py
+--- a/Quiz_generator.py	(revision 7c4caa06e55f79dcd46295757eda916f2d24455c)
++++ b/Quiz_generator.py	(date 1738166388583)
+@@ -1,64 +1,69 @@
+-import streamlit as st
+ from utils.content_processor import ContentProcessor
+ from utils.result_handler import ResultHandler
+ import random
+-
+ class QuizGenerator:
+     def __init__(self):
++        print("Initializing Quiz Generator...")
+         self.content_processor = ContentProcessor()
+         self.result_handler = ResultHandler()
+         self.current_quiz = None
+-
+     def generate_quiz(self, topic: str, num_questions: int):
+         """Generate a quiz for the given topic"""
+         sections = self.content_processor.get_content_sections(topic)
+-
+         if not sections:
+-            return None, f"Topic not found. Available topics: {', '.join(self.content_processor.get_available_topics())}"
+-
++            print(f"Topic not found. Available topics: {', '.join(self.content_processor.get_available_topics())}")
++            return None
+         questions = []
+         try:
+             for _ in range(min(num_questions, len(sections))):
+                 section = random.choice(sections)
+                 sections.remove(section)  # Avoid duplicate questions
+-
+                 question_dict = self.content_processor.create_question(section)
+                 if question_dict:
+                     questions.append(question_dict)
+-
+             self.current_quiz = questions
+-            return questions, None
+-
++            return questions
+         except Exception as e:
+-            return None, f"Error generating quiz: {e}"
+-
+-# Streamlit UI
++            print(f"Error generating quiz: {e}")
++            return None
++    def run_quiz(self):
++        """Run the quiz application"""
++        while True:
++            print("\n=== Quiz Generator ===")
++            print("Available topics:", ", ".join(self.content_processor.get_available_topics()))
++            topic = input("\nEnter topic (or 'exit' to quit): ").lower()
++            if topic == 'exit':
++                break
++            try:
++                num_questions = int(input("How many questions would you like? "))
++                if num_questions <= 0:
++                    raise ValueError("Number of questions must be positive")
++                print("\nGenerating quiz...")
++                quiz = self.generate_quiz(topic, num_questions)
++                if quiz:
++                    self.result_handler.display_quiz(quiz)
++                    while True:
++                        show_answers = input("\nWould you like to see the answers? (yes/no): ").lower()
++                        if show_answers in ['yes', 'no']:
++                            break
++                        print("Please enter 'yes' or 'no'")
++                    if show_answers == 'yes':
++                        self.result_handler.show_answers(quiz)
++            except ValueError as e:
++                print(f"Error: {e}")
++                print("Please enter a valid number of questions.")
++            except Exception as e:
++                print(f"An unexpected error occurred: {e}")
++                print("Please try again.")
+ def main():
+-    st.title("Quiz Generator")
+-    st.write("Generate quizzes from available topics with ease.")
+-
+-    # Instantiate QuizGenerator
+-    quiz_gen = QuizGenerator()
+-
+-    # Sidebar for topic selection
+-    st.sidebar.header("Quiz Options")
+-    available_topics = quiz_gen.content_processor.get_available_topics()
+-    topic = st.sidebar.selectbox("Select a topic", options=available_topics)
+-    num_questions = st.sidebar.number_input("Number of questions", min_value=1, step=1, value=5)
+-
+-    # Generate Quiz Button
+-    if st.sidebar.button("Generate Quiz"):
+-        st.write(f"### Generating quiz for topic: {topic}")
+-        quiz, error = quiz_gen.generate_quiz(topic, num_questions)
+-
+-        if error:
+-            st.error(error)
+-        else:
+-            for i, q in enumerate(quiz, start=1):
+-                st.write(f"**Q{i}:** {q['question']}")
+-                st.write(f"_Options:_ {', '.join(q['options'])}")
+-                if st.button(f"Show Answer for Q{i}", key=f"answer_{i}"):
+-                    st.write(f"**Answer:** {q['answer']}")
+-
+-if __name__ == "__main__":
++    try:
++        quiz_gen = QuizGenerator()
++        quiz_gen.run_quiz()
++    except KeyboardInterrupt:
++        print("\nQuiz Generator terminated by user.")
++    except Exception as e:
++        print(f"\nAn error occurred: {e}")
++    finally:
++        print("\nThank you for using Quiz Generator!")
++if __name__ == "main":
+     main()
+\ No newline at end of file
+Index: quiz_app.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/quiz_app.py b/quiz_app.py
+new file mode 100644
+--- /dev/null	(date 1738170906369)
++++ b/quiz_app.py	(date 1738170906369)
+@@ -0,0 +1,182 @@
++import streamlit as st
++import random
++from utils.content_processor import ContentProcessor
++from utils.result_handler import ResultHandler
++import json
++from datetime import datetime
++import os
++
++
++class StreamlitQuizApp:
++    def __init__(self):
++        # Initialize the core components
++        self.content_processor = ContentProcessor()
++        self.result_handler = ResultHandler()
++
++        # Initialize session state if not already done
++        if 'current_quiz' not in st.session_state:
++            st.session_state.current_quiz = None
++        if 'user_answers' not in st.session_state:
++            st.session_state.user_answers = {}
++        if 'show_results' not in st.session_state:
++            st.session_state.show_results = False
++
++    def generate_quiz(self, topic: str, num_questions: int):
++        """Generate a quiz for the given topic"""
++        sections = self.content_processor.get_content_sections(topic)
++        if not sections:
++            st.error(f"Topic not found. Available topics: {', '.join(self.content_processor.get_available_topics())}")
++            return None
++
++        questions = []
++        try:
++            for _ in range(min(num_questions, len(sections))):
++                section = random.choice(sections)
++                sections.remove(section)  # Avoid duplicate questions
++                question_dict = self.content_processor.create_question(section)
++                if question_dict:
++                    questions.append(question_dict)
++            return questions
++        except Exception as e:
++            st.error(f"Error generating quiz: {e}")
++            return None
++
++    def save_results(self):
++        """Save quiz results with user answers"""
++        if not st.session_state.current_quiz:
++            return
++
++        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
++        result_data = {
++            "timestamp": timestamp,
++            "questions": [],
++            "user_answers": st.session_state.user_answers,
++            "score": self.calculate_score()
++        }
++
++        for q in st.session_state.current_quiz:
++            question_data = {
++                "question": q['question'],
++                "options": q['options'],
++                "correct_answer": q['correct_answer']
++            }
++            result_data["questions"].append(question_data)
++
++        try:
++            if not os.path.exists(self.result_handler.results_dir):
++                os.makedirs(self.result_handler.results_dir)
++
++            filename = os.path.join(self.result_handler.results_dir, f"quiz_result_{timestamp}.json")
++            with open(filename, 'w', encoding='utf-8') as f:
++                json.dump(result_data, f, indent=4, ensure_ascii=False)
++            st.success(f"Quiz results saved successfully!")
++        except Exception as e:
++            st.error(f"Error saving quiz results: {e}")
++
++    def calculate_score(self):
++        """Calculate the quiz score"""
++        if not st.session_state.current_quiz:
++            return 0
++
++        correct = 0
++        total = len(st.session_state.current_quiz)
++
++        for i, question in enumerate(st.session_state.current_quiz):
++            if i in st.session_state.user_answers:
++                user_answer = st.session_state.user_answers[i]
++                correct_answer = question['correct_answer']
++                if user_answer == correct_answer:
++                    correct += 1
++
++        return (correct, total)
++
++    def run(self):
++        """Main Streamlit application"""
++        st.title("Interactive Quiz Generator")
++
++        # Sidebar for quiz configuration
++        with st.sidebar:
++            st.header("Quiz Settings")
++            available_topics = self.content_processor.get_available_topics()
++            topic = st.selectbox("Select Topic", available_topics)
++            num_questions = st.slider("Number of Questions", 1, 10, 5)
++
++            if st.button("Generate New Quiz"):
++                st.session_state.current_quiz = self.generate_quiz(topic, num_questions)
++                st.session_state.user_answers = {}
++                st.session_state.show_results = False
++
++        # Main quiz interface
++        if st.session_state.current_quiz:
++            self.display_quiz()
++
++            if st.button("Submit Quiz"):
++                st.session_state.show_results = True
++                self.save_results()
++
++            if st.session_state.show_results:
++                self.display_results()
++        else:
++            st.info("Select a topic and generate a quiz to begin!")
++
++    def display_quiz(self):
++        """Display quiz questions with interactive elements"""
++        st.header("Quiz Questions")
++
++        for i, question in enumerate(st.session_state.current_quiz):
++            st.subheader(f"Question {i + 1}")
++            st.write(question['question'])
++
++            # Create radio buttons for options
++            options = question['options']
++            option_labels = [f"{chr(65 + j)}. {opt}" for j, opt in enumerate(options)]
++
++            selected_option = st.radio(
++                "Select your answer:",
++                options,
++                key=f"q_{i}",
++                index=None,
++                format_func=lambda x: f"{chr(65 + options.index(x))}. {x}"
++            )
++
++            if selected_option:
++                st.session_state.user_answers[i] = selected_option
++
++            st.markdown("---")
++
++    def display_results(self):
++        """Display quiz results and correct answers"""
++        st.header("Quiz Results")
++
++        correct, total = self.calculate_score()
++        st.markdown(f"### Score: {correct}/{total} ({(correct / total * 100):.1f}%)")
++
++        for i, question in enumerate(st.session_state.current_quiz):
++            st.subheader(f"Question {i + 1}")
++            st.write(question['question'])
++
++            user_answer = st.session_state.user_answers.get(i)
++            correct_answer = question['correct_answer']
++
++            for j, option in enumerate(question['options']):
++                prefix = chr(65 + j)
++                if option == correct_answer:
++                    st.markdown(f"✅ **{prefix}. {option}** (Correct Answer)")
++                elif option == user_answer:
++                    if user_answer != correct_answer:
++                        st.markdown(f"❌ **{prefix}. {option}** (Your Answer)")
++                    else:
++                        st.markdown(f"✅ **{prefix}. {option}** (Your Answer)")
++                else:
++                    st.markdown(f"{prefix}. {option}")
++
++            st.markdown("---")
++
++
++def main():
++    app = StreamlitQuizApp()
++    app.run()
++
++
++if __name__ == "__main__":
++    main()
+\ No newline at end of file
