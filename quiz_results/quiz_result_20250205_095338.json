@@ -1,0 +1,29 @@
+{
+    "timestamp": "20250205_095338",
+    "questions": [
+        {
+            "question": "Which statement about Basic is correct?",
+            "options": [
+                "This represents an incorrect view of Basic.",
+                "This is a common misunderstanding about Basic.",
+                "Basic types: int, float, str, bool",
+                "This statement contains incorrect information about Basic."
+            ],
+            "correct_answer": "Basic types: int, float, str, bool"
+        },
+        {
+            "question": "What is true about def?",
+            "options": [
+                "def __init__(self, filename, mode): self.filename = filename self.mode = mode self.file = None",
+                "This statement contains incorrect information about def.",
+                "This represents an incorrect view of def.",
+                "This is a common misunderstanding about def."
+            ],
+            "correct_answer": "def __init__(self, filename, mode): self.filename = filename self.mode = mode self.file = None"
+        }
+    ],
+    "user_answers": {
+        "0": "This is a common misunderstanding about Basic.",
+        "1": "This represents an incorrect view of def."
+    }
+}

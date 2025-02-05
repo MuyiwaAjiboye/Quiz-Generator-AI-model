@@ -1,0 +1,29 @@
+{
+    "timestamp": "20250205_094617",
+    "questions": [
+        {
+            "question": "Which of the following best describes Python?",
+            "options": [
+                "Python refers to an unrelated technology in software development.",
+                "Python is a different concept that involves different processes.",
+                "This is an incorrect interpretation of Python.",
+                "Python implements dynamic typing, which means variables can change types during runtime. For example: x = 5              # x is now an integer x = \"Hello\"        # x is now a string x = [1, 2, 3]      # x is now a list This flexibility contrasts with statically-typed languages where variables must declare their type explicitly."
+            ],
+            "correct_answer": "Python implements dynamic typing, which means variables can change types during runtime. For example: x = 5              # x is now an integer x = \"Hello\"        # x is now a string x = [1, 2, 3]      # x is now a list This flexibility contrasts with statically-typed languages where variables must declare their type explicitly."
+        },
+        {
+            "question": "Which statement about Dynamic is correct?",
+            "options": [
+                "This is a common misunderstanding about Dynamic.",
+                "Dynamic typing allows variable type changes",
+                "This represents an incorrect view of Dynamic.",
+                "This statement contains incorrect information about Dynamic."
+            ],
+            "correct_answer": "Dynamic typing allows variable type changes"
+        }
+    ],
+    "user_answers": {
+        "0": "Python is a different concept that involves different processes.",
+        "1": "This is a common misunderstanding about Dynamic."
+    }
+}

@@ -1,0 +1,40 @@
+{
+    "timestamp": "20250205_095510",
+    "questions": [
+        {
+            "question": "How would you define Advanced?",
+            "options": [
+                "This is an incorrect interpretation of Advanced.",
+                "Advanced refers to an unrelated technology in software development.",
+                "Advanced is a different concept that involves different processes.",
+                "Advanced Function Features: square = lambda x: x**2"
+            ],
+            "correct_answer": "Advanced Function Features: square = lambda x: x**2"
+        },
+        {
+            "question": "Which of the following correctly describes except?",
+            "options": [
+                "except ValueError as e: print(f\"Value error: {e}\")",
+                "This statement contains incorrect information about except.",
+                "This is a common misunderstanding about except.",
+                "This represents an incorrect view of except."
+            ],
+            "correct_answer": "except ValueError as e: print(f\"Value error: {e}\")"
+        },
+        {
+            "question": "Which of the following correctly describes def?",
+            "options": [
+                "def __init__(self, filename, mode): self.filename = filename self.mode = mode self.file = None",
+                "This represents an incorrect view of def.",
+                "This statement contains incorrect information about def.",
+                "This is a common misunderstanding about def."
+            ],
+            "correct_answer": "def __init__(self, filename, mode): self.filename = filename self.mode = mode self.file = None"
+        }
+    ],
+    "user_answers": {
+        "1": "This statement contains incorrect information about except.",
+        "0": "This is an incorrect interpretation of Advanced.",
+        "2": "This represents an incorrect view of def."
+    }
+}

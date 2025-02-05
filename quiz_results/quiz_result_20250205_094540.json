@@ -1,0 +1,29 @@
+{
+    "timestamp": "20250205_094540",
+    "questions": [
+        {
+            "question": "Which of the following correctly describes Dynamic?",
+            "options": [
+                "This represents an incorrect view of Dynamic.",
+                "This is a common misunderstanding about Dynamic.",
+                "This statement contains incorrect information about Dynamic.",
+                "Dynamic typing allows variable type changes"
+            ],
+            "correct_answer": "Dynamic typing allows variable type changes"
+        },
+        {
+            "question": "What is the correct definition of Example?",
+            "options": [
+                "Example type handling: x = 5           # int x = \"Hello\"     # now a str x = [1, 2, 3]   # now a list print(type(x))  # prints: <class 'list'>",
+                "Example refers to an unrelated technology in software development.",
+                "Example is a different concept that involves different processes.",
+                "This is an incorrect interpretation of Example."
+            ],
+            "correct_answer": "Example type handling: x = 5           # int x = \"Hello\"     # now a str x = [1, 2, 3]   # now a list print(type(x))  # prints: <class 'list'>"
+        }
+    ],
+    "user_answers": {
+        "0": "This is a common misunderstanding about Dynamic.",
+        "1": "Example type handling: x = 5           # int x = \"Hello\"     # now a str x = [1, 2, 3]   # now a list print(type(x))  # prints: <class 'list'>"
+    }
+}
